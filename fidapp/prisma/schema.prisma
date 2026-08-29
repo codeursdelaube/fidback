@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  TRIAL
+}
+
+enum ServiceVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  pseudo        String         @unique
+  email         String         @unique
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+
+  @@map("users")
+}
+
+model Company {
+  id                 String             @id @default(uuid())
+  name               String
+  email              String             @unique
+  subscriptionStatus SubscriptionStatus @default(INACTIVE)
+  createdAt          DateTime           @default(now())
+  services           Service[]
+  payments           Payment[]
+
+  @@map("companies")
+}
+
+model Service {
+  id                  String               @id @default(uuid())
+  companyId           String
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name                String
+  description         String
+  visibility          ServiceVisibility    @default(PUBLIC)
+  createdAt           DateTime             @default(now())
+  subscriptions       Subscription[]
+  updateAnnouncements UpdateAnnouncement[]
+
+  @@map("services")
+}
+
+model Subscription {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  feedbacks Feedback[]
+
+  @@unique([userId, serviceId])
+  @@map("subscriptions")
+}
+
+model Feedback {
+  id               String           @id @default(uuid())
+  subscriptionId   String
+  subscription     Subscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  content          String
+  moderationStatus ModerationStatus @default(PENDING)
+  createdAt        DateTime         @default(now())
+
+  @@map("feedbacks")
+}
+
+model UpdateAnnouncement {
+  id        String   @id @default(uuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  sentAt    DateTime @default(now())
+
+  @@map("update_announcements")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+  provider  String
+  createdAt DateTime      @default(now())
+
+  @@map("payments")
+}

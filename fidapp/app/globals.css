@@ -1,0 +1,168 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@layer base {
+  :root {
+    --primary: #4f46e5;
+    --primary-focus: #4338ca;
+    --secondary: #8758f7;
+    --accent: #ec4899;
+    --neutral: #0f172a;
+    --base-100: #ffffff;
+    --base-200: #f8fafc;
+    --base-300: #f1f5f9;
+  }
+}
+
+body {
+  font-family: var(--font-jakarta), var(--font-inter), system-ui, -apple-system, sans-serif;
+  background-color: #f3f4f8;
+  color: #0f172a;
+  overflow-x: hidden;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Atmospheric Glows matching reference */
+.ambient-bg {
+  background:
+    radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 15% 25%, rgba(99, 102, 241, 0.14) 0%, transparent 40%),
+    radial-gradient(circle at 70% 65%, rgba(236, 72, 153, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 30% 85%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    #f4f5fa;
+}
+
+/* ──────────────────────────────────────────────────────
+   GLASS PANELS
+   ────────────────────────────────────────────────────── */
+
+/* Auth & Card panels with solid white base */
+.glass-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 20px 60px -10px rgba(79, 70, 229, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.05);
+}
+
+/* Translucent panels */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 16px 40px -15px rgba(99, 102, 241, 0.07), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.glass-panel-dark {
+  background: rgba(13, 17, 30, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* ──────────────────────────────────────────────────────
+   3D GLASS CRYSTAL & CHROME ELEMENTS
+   ────────────────────────────────────────────────────── */
+
+.glass-cube-3d {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.2) 100%);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.05),
+    0 15px 35px -5px rgba(99, 102, 241, 0.25);
+}
+
+.chrome-droplet {
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #d8b4fe 40%, #818cf8 75%, #4338ca 100%);
+  box-shadow:
+    inset 0 4px 6px rgba(255, 255, 255, 0.8),
+    0 10px 25px -3px rgba(79, 70, 229, 0.45);
+}
+
+.glass-cylinder {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(167, 139, 250, 0.4) 40%, rgba(99, 102, 241, 0.8) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.9),
+    0 12px 30px -4px rgba(99, 102, 241, 0.35);
+}
+
+.glass-bubble {
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9) 0%, rgba(196, 181, 253, 0.4) 40%, rgba(129, 140, 248, 0.25) 80%, rgba(255, 255, 255, 0.6) 100%);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, 0.9),
+    0 10px 20px -3px rgba(124, 58, 237, 0.25);
+}
+
+/* ──────────────────────────────────────────────────────
+   ANIMATIONS
+   ────────────────────────────────────────────────────── */
+
+@keyframes float-y {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(-1.5deg);
+  }
+}
+
+@keyframes float-reverse {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(10px) rotate(1deg);
+  }
+}
+
+.animate-float-y {
+  animation: float-y 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 6s ease-in-out infinite;
+}
