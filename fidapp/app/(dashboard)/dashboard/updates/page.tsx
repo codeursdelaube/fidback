@@ -17,6 +17,7 @@ import {
 import toast from "react-hot-toast";
 import { UpdateAnnouncementItem, ServiceItem } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import { pushNotification } from "@/lib/notifications";
 
 export default function DashboardUpdatesPage() {
   const supabase = createClient();
@@ -115,6 +116,14 @@ export default function DashboardUpdatesPage() {
     setMessage("");
     toast.success(`Annonce diffusée en direct aux abonnés de « ${serviceName} » !`, {
       icon: "📢",
+    });
+
+    // Fire browser push notification for the company user too
+    pushNotification({
+      type: "update",
+      title: `📢 MAJ publiée — ${serviceName}`,
+      body: title.trim(),
+      href: `/dashboard/updates`,
     });
   };
 

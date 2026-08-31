@@ -9,38 +9,50 @@ import {
   Users,
   MessageSquareText,
   CheckCircle2,
-  Filter,
   ArrowRight,
   Plus,
   Sparkles,
+  Layers,
 } from "lucide-react";
 import { ServiceItem } from "@/lib/types";
+import { pushNotification } from "@/lib/notifications";
+import toast from "react-hot-toast";
+
+type ServiceWithMeta = ServiceItem & {
+  isSubscribed: boolean;
+  bannerUrl?: string;
+  companyName?: string;
+};
 
 export default function ExploreServicesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
-
-  const [services, setServices] = useState<
-    (ServiceItem & { isSubscribed: boolean; bannerUrl?: string })[]
-  >([]);
+  const [services, setServices] = useState<ServiceWithMeta[]>([]);
 
   useEffect(() => {
-    // Collect all custom services created by companies in localStorage
-    const customServices: any[] = [];
+    loadServices();
+    const onUpdate = () => loadServices();
+    window.addEventListener("storage", onUpdate);
+    return () => window.removeEventListener("storage", onUpdate);
+  }, []);
+
+  function loadServices() {
+    const collected: ServiceWithMeta[] = [];
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith("fidback_services_")) {
           const raw = localStorage.getItem(key);
           if (raw) {
-            const parsed = JSON.parse(raw);
+            const parsed: ServiceWithMeta[] = JSON.parse(raw);
             if (Array.isArray(parsed)) {
               parsed.forEach((s) => {
                 if (s.visibility === "PUBLIC") {
-                  customServices.push({
+                  const isSubbed = localStorage.getItem(`fidback_sub_${s.id}`) === "true";
+                  collected.push({
                     ...s,
-                    isSubscribed: false,
-                    bannerUrl: s.logoUrl,
+                    isSubscribed: isSubbed,
+                    bannerUrl: s.logoUrl || s.bannerUrl,
                   });
                 }
               });
@@ -49,114 +61,60 @@ export default function ExploreServicesPage() {
         }
       }
     } catch (e) {
-      console.warn("Explorer load custom services:", e);
+      console.warn("Explorer load services:", e);
     }
-
-    const defaultServices = [
-      {
-        id: "srv-1",
-        companyId: "comp-1",
-        companyName: "Gozem Togo",
-        name: "Course Moto & Taxi Lomé",
-        description:
-          "Plateforme de transport urbain sécurisé et rapide pour tous vos trajets dans le Grand Lomé.",
-        visibility: "PUBLIC" as const,
-        category: "Transport & Mobilité",
-        createdAt: "2026-01-15",
-        isSubscribed: true,
-        bannerUrl: "/img-entrepreneur.jpg",
-        _count: {
-          subscriptions: 890,
-          feedbacks: 92,
-          updateAnnouncements: 7,
-        },
-      },
-      {
-        id: "srv-2",
-        companyId: "comp-1",
-        companyName: "Gozem Togo",
-        name: "Livraison Gozem Food",
-        description:
-          "Commande et livraison express de vos plats favoris depuis les restaurants réputés de la capitale.",
-        visibility: "PUBLIC" as const,
-        category: "Restauration",
-        createdAt: "2026-02-01",
-        isSubscribed: true,
-        bannerUrl: "/Chef.jpg",
-        _count: {
-          subscriptions: 530,
-          feedbacks: 56,
-          updateAnnouncements: 5,
-        },
-      },
-      {
-        id: "srv-4",
-        companyId: "comp-2",
-        companyName: "AfrikPay Togo",
-        name: "Paiement & Transfert Mobile",
-        description:
-          "Application fintech unifiée pour recharger vos comptes T-Money, Flooz et payer vos factures CEET / TdE.",
-        visibility: "PUBLIC" as const,
-        category: "Fintech",
-        createdAt: "2026-01-20",
-        isSubscribed: true,
-        bannerUrl: "/img-entrepreneur.jpg",
-        _count: {
-          subscriptions: 1240,
-          feedbacks: 140,
-          updateAnnouncements: 9,
-        },
-      },
-      {
-        id: "srv-5",
-        companyId: "comp-3",
-        companyName: "Le Palmier Gourmand",
-        name: "Expérience Restaurant & Menu du Jour",
-        description:
-          "Table gastronomique à Tokoin. Donnez votre retour sur l'accueil, les saveurs de nos plats togolais et le cadre.",
-        visibility: "PUBLIC" as const,
-        category: "Restauration",
-        createdAt: "2026-02-10",
-        isSubscribed: false,
-        bannerUrl: "/Chef.jpg",
-        _count: {
-          subscriptions: 420,
-          feedbacks: 68,
-          updateAnnouncements: 4,
-        },
-      },
-    ];
-
-    setServices([...customServices, ...defaultServices]);
-  }, []);
+    setServices(collected);
+  }
 
   const toggleSubscription = (serviceId: string) => {
-    setServices(
-      services.map((svc) =>
-        svc.id === serviceId
+    const svc = services.find((s) => s.id === serviceId);
+    if (!svc) return;
+
+    const next = !svc.isSubscribed;
+    localStorage.setItem(`fidback_sub_${serviceId}`, String(next));
+
+    setServices((prev) =>
+      prev.map((s) =>
+        s.id === serviceId
           ? {
-              ...svc,
-              isSubscribed: !svc.isSubscribed,
+              ...s,
+              isSubscribed: next,
               _count: {
-                ...svc._count!,
-                subscriptions: svc.isSubscribed
-                  ? svc._count!.subscriptions - 1
-                  : svc._count!.subscriptions + 1,
+                ...s._count!,
+                subscriptions: next
+                  ? (s._count?.subscriptions || 0) + 1
+                  : Math.max(0, (s._count?.subscriptions || 1) - 1),
               },
             }
-          : svc
+          : s
       )
     );
+
+    if (next) {
+      toast.success(`Abonné à "${svc.name}" — vous recevrez leurs mises à jour.`, { icon: "🔔" });
+      pushNotification({
+        type: "system",
+        title: `Abonné à ${svc.name}`,
+        body: `Vous recevrez désormais les mises à jour de ${svc.companyName || "cette entreprise"}.`,
+        href: `/app/service/${serviceId}`,
+      });
+    } else {
+      toast("Désabonné de ce service.", { icon: "ℹ️" });
+    }
   };
 
+  // Compute unique categories from actual services
+  const categories = ["ALL", ...Array.from(new Set(services.map((s) => s.category).filter(Boolean))) as string[]];
+
   const filtered = services.filter((svc) => {
-    const matchesCategory =
-      selectedCategory === "ALL" || svc.category === selectedCategory;
-    const matchesQuery =
-      svc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      svc.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      svc.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesQuery;
+    const matchCat = selectedCategory === "ALL" || svc.category === selectedCategory;
+    const q = searchQuery.toLowerCase();
+    const matchQ =
+      !q ||
+      svc.name.toLowerCase().includes(q) ||
+      (svc.companyName || "").toLowerCase().includes(q) ||
+      (svc.description || "").toLowerCase().includes(q);
+    return matchCat && matchQ;
   });
 
   return (
@@ -171,7 +129,7 @@ export default function ExploreServicesPage() {
           Explorer les Services & Entreprises du Togo 🇹🇬
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 mt-1">
-          Abonnez-vous aux fiches services pour recevoir leurs mises à jour et partager des retours qualitatifs détaillés.
+          Abonnez-vous aux fiches services pour recevoir leurs mises à jour et partager des retours qualitatifs.
         </p>
       </div>
 
@@ -183,14 +141,14 @@ export default function ExploreServicesPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher par nom de service, entreprise..."
+            placeholder="Rechercher par nom, entreprise, secteur..."
             className="w-full pl-10 pr-4 py-3 rounded-full bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm shadow-xs"
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1">
-          {["ALL", "Transport & Mobilité", "Fintech", "Restauration", "Santé"].map(
-            (cat) => (
+        {categories.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1">
+            {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -203,10 +161,27 @@ export default function ExploreServicesPage() {
               >
                 {cat === "ALL" ? "Tous les secteurs" : cat}
               </button>
-            )
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Empty state */}
+      {filtered.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+          <Layers className="w-12 h-12 text-slate-200" />
+          <p className="text-base font-bold text-slate-500">
+            {services.length === 0
+              ? "Aucune fiche service publiée pour l'instant"
+              : "Aucun service ne correspond à votre recherche"}
+          </p>
+          {services.length === 0 && (
+            <p className="text-xs text-slate-400 text-center max-w-sm">
+              Les entreprises partenaires de Fidback publient ici leurs services dès leur inscription. Revenez bientôt !
+            </p>
           )}
         </div>
-      </div>
+      )}
 
       {/* Grid of Services */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -226,14 +201,14 @@ export default function ExploreServicesPage() {
                   />
                   <div className="absolute top-2 left-2">
                     <span className="text-[10px] font-bold text-slate-900 bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-xs">
-                      {service.category}
+                      {service.category || "Service"}
                     </span>
                   </div>
                 </div>
               )}
 
               <div className="flex items-center justify-between mb-3">
-                {!service.bannerUrl && (
+                {!service.bannerUrl && service.category && (
                   <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                     {service.category}
                   </span>
@@ -262,16 +237,14 @@ export default function ExploreServicesPage() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 mb-1">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-xs font-extrabold text-slate-600">
-                  {service.companyName}
-                </span>
-              </div>
+              {service.companyName && (
+                <div className="flex items-center gap-2 mb-1">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs font-extrabold text-slate-600">{service.companyName}</span>
+                </div>
+              )}
 
-              <h3 className="text-lg font-bold text-slate-900 mb-2">
-                {service.name}
-              </h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{service.name}</h3>
 
               <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 mb-6">
                 {service.description}
@@ -282,10 +255,10 @@ export default function ExploreServicesPage() {
               <div className="flex items-center gap-3 text-xs text-slate-500">
                 <span className="flex items-center gap-1 font-bold text-slate-800">
                   <Users className="w-3.5 h-3.5 text-emerald-600" />
-                  {service._count?.subscriptions} abonnés
+                  {service._count?.subscriptions ?? 0} abonnés
                 </span>
                 <span>•</span>
-                <span>{service._count?.feedbacks} retours</span>
+                <span>{service._count?.feedbacks ?? 0} retours</span>
               </div>
 
               <Link

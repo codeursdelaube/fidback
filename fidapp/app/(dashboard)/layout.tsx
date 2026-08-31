@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
+import NotificationBell from "@/components/ui/NotificationBell";
 
 export default function DashboardLayout({
   children,
@@ -300,7 +301,8 @@ export default function DashboardLayout({
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <NotificationBell variant="dark" />
             <Link
               href="/dashboard/settings"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-full transition-all"

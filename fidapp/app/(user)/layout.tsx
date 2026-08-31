@@ -7,12 +7,11 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Compass,
   BellRing,
-  User as UserIcon,
   LogOut,
-  Building2,
   Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import NotificationBell from "@/components/ui/NotificationBell";
 
 export default function UserAppLayout({
   children,
@@ -129,9 +128,11 @@ export default function UserAppLayout({
             })}
           </nav>
 
-          {/* Right profile action (Dynamic Pseudo) */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 pl-2">
+          {/* Right: Bell + Profile */}
+          <div className="flex items-center gap-2">
+            <NotificationBell variant="light" />
+
+            <div className="flex items-center gap-2 pl-1">
               <div className="relative w-8 h-8 rounded-xl overflow-hidden border border-emerald-300 bg-emerald-100 flex items-center justify-center text-emerald-900 font-black text-xs shadow-xs">
                 {avatarUrl ? (
                   <Image

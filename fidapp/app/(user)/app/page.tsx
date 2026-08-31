@@ -8,22 +8,54 @@ import {
   Compass,
   ArrowRight,
   Building2,
-  Calendar,
   CheckCircle2,
   Users,
   Sparkles,
   ShieldCheck,
+  MessageSquareText,
+  Layers,
+  AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { ServiceItem, UpdateAnnouncementItem, FeedbackItem } from "@/lib/types";
+
+interface MyFeedback {
+  id: string;
+  serviceName: string;
+  serviceId: string;
+  content: string;
+  createdAt: string;
+  constructiveScore?: number;
+}
+
+interface SubscribedService {
+  id: string;
+  name: string;
+  companyName?: string;
+  category?: string;
+}
+
+interface RecentUpdate extends UpdateAnnouncementItem {
+  companyName?: string;
+  serviceName?: string;
+}
 
 export default function UserHomePage() {
   const supabase = createClient();
   const [pseudo, setPseudo] = useState("membre");
 
+  // Dynamic data from localStorage
+  const [subscribedServices, setSubscribedServices] = useState<SubscribedService[]>([]);
+  const [recentUpdates, setRecentUpdates] = useState<RecentUpdate[]>([]);
+  const [myFeedbacks, setMyFeedbacks] = useState<MyFeedback[]>([]);
+  const [currentPseudo, setCurrentPseudo] = useState("membre");
+
   useEffect(() => {
     async function fetchUser() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           const uPseudo =
             user.user_metadata?.pseudo ||
@@ -31,6 +63,7 @@ export default function UserHomePage() {
             user.email?.split("@")[0] ||
             "membre";
           setPseudo(uPseudo);
+          setCurrentPseudo(uPseudo);
         }
       } catch (err) {
         console.warn("Erreur fetch user:", err);
@@ -39,62 +72,87 @@ export default function UserHomePage() {
     fetchUser();
   }, [supabase]);
 
-  const subscribedServices = [
-    {
-      id: "srv-1",
-      name: "Course Moto & Taxi Lomé",
-      companyName: "Gozem Togo",
-      category: "Transport",
-      unreadUpdates: 1,
-    },
-    {
-      id: "srv-2",
-      name: "Livraison Gozem Food",
-      companyName: "Gozem Togo",
-      category: "Restauration",
-      unreadUpdates: 0,
-    },
-    {
-      id: "srv-4",
-      name: "Paiement & Transfert Mobile",
-      companyName: "AfrikPay Togo",
-      category: "Fintech",
-      unreadUpdates: 1,
-    },
-  ];
+  useEffect(() => {
+    loadFromStorage();
+    const onUpdate = () => loadFromStorage();
+    window.addEventListener("fidback_feedbacks_updated", onUpdate);
+    window.addEventListener("storage", onUpdate);
+    return () => {
+      window.removeEventListener("fidback_feedbacks_updated", onUpdate);
+      window.removeEventListener("storage", onUpdate);
+    };
+  }, []);
 
-  const recentUpdates = [
-    {
-      id: "upd-1",
-      serviceName: "Course Moto & Taxi Lomé",
-      companyName: "Gozem Togo",
-      title: "Optimisation de la passerelle de paiement T-Money",
-      message:
-        "Suite à vos précieux feedbacks concernant le délai de réception de l'OTP le matin, notre équipe technique a migré vers un serveur direct. Les transactions se valident désormais sous 5 secondes !",
-      date: "Il y a 2 jours",
-    },
-    {
-      id: "upd-3",
-      serviceName: "Paiement & Transfert Mobile",
-      companyName: "AfrikPay Togo",
-      title: "Nouveau : Génération de reçus PDF instantanés",
-      message:
-        "Vous nous l'aviez demandé pour votre comptabilité : vous pouvez désormais exporter tous vos historiques de transaction en un clic !",
-      date: "Il y a 4 jours",
-    },
-  ];
+  function loadFromStorage() {
+    try {
+      // ── Collect all services + subscriptions ──
+      const subbed: SubscribedService[] = [];
+      const updates: RecentUpdate[] = [];
+      const myFbs: MyFeedback[] = [];
 
-  const myPastFeedbacks = [
-    {
-      id: "fb-1",
-      serviceName: "Course Moto & Taxi Lomé",
-      content:
-        "L'application réagit beaucoup plus vite depuis la dernière mise à jour. En revanche, lors des paiements par T-Money le matin vers 8h, le code OTP tarde parfois de 45 secondes. Si vous pouvez optimiser ce délai, ce sera parfait !",
-      date: "28 Fév 2026",
-      status: "APPROVED",
-      score: 95,
-    },
-  ];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+
+        // Services
+        if (key.startsWith("fidback_services_")) {
+          const companyId = key.replace("fidback_services_", "");
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const services: (ServiceItem & { companyName?: string })[] = JSON.parse(raw);
+          services.forEach((svc) => {
+            const isSubbed = localStorage.getItem(`fidback_sub_${svc.id}`) === "true";
+            if (isSubbed) {
+              subbed.push({
+                id: svc.id,
+                name: svc.name,
+                companyName: svc.companyName,
+                category: svc.category,
+              });
+
+              // Feedbacks I sent for this service
+              const fbRaw = localStorage.getItem(`fidback_feedbacks_${companyId}_${svc.id}`);
+              if (fbRaw) {
+                const fbs: (FeedbackItem & { constructiveScore?: number })[] = JSON.parse(fbRaw);
+                fbs.forEach((fb) => {
+                  myFbs.push({
+                    id: fb.id,
+                    serviceName: svc.name,
+                    serviceId: svc.id,
+                    content: fb.content,
+                    createdAt: fb.createdAt,
+                    constructiveScore: fb.constructiveScore,
+                  });
+                });
+              }
+            }
+          });
+
+          // Updates for subscribed services
+          const updRaw = localStorage.getItem(`fidback_updates_${companyId}`);
+          if (updRaw) {
+            const upds: UpdateAnnouncementItem[] = JSON.parse(updRaw);
+            upds.forEach((u) => {
+              const matchedSvc = services.find((s) => s.id === u.serviceId);
+              if (matchedSvc && localStorage.getItem(`fidback_sub_${u.serviceId}`) === "true") {
+                updates.push({
+                  ...u,
+                  companyName: matchedSvc.companyName,
+                  serviceName: matchedSvc.name,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      setSubscribedServices(subbed);
+      setRecentUpdates(updates.sort((a, b) => (b.sentAt > a.sentAt ? 1 : -1)).slice(0, 5));
+      setMyFeedbacks(myFbs.slice(0, 10));
+    } catch (e) {
+      console.warn("Erreur chargement données home:", e);
+    }
+  }
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -125,8 +183,9 @@ export default function UserHomePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Feed of Updates from Creators */}
+        {/* Left Column */}
         <div className="lg:col-span-8 space-y-6">
+          {/* Recent Updates Feed */}
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-extrabold text-slate-950 flex items-center gap-2">
               <BellRing className="w-5 h-5 text-emerald-600" />
@@ -134,113 +193,139 @@ export default function UserHomePage() {
             </h2>
           </div>
 
-          <div className="space-y-4">
-            {recentUpdates.map((upd) => (
-              <div
-                key={upd.id}
-                className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-300 transition-all"
+          {recentUpdates.length === 0 ? (
+            <div className="bg-white rounded-3xl p-10 border border-dashed border-slate-200 text-center space-y-3">
+              <BellRing className="w-8 h-8 text-slate-200 mx-auto" />
+              <p className="text-sm font-bold text-slate-500">Aucune annonce pour le moment</p>
+              <p className="text-xs text-slate-400">
+                Abonnez-vous à des services pour recevoir leurs mises à jour ici.
+              </p>
+              <Link
+                href="/app/explore"
+                className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-700 hover:text-emerald-900"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-extrabold text-slate-950">
-                      {upd.companyName}
-                    </span>
-                    <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">
-                      {upd.serviceName}
-                    </span>
+                Découvrir les services <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentUpdates.map((upd) => (
+                <div
+                  key={upd.id}
+                  className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-300 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-extrabold text-slate-950">
+                        {upd.companyName}
+                      </span>
+                      <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">
+                        {upd.serviceName}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400">{upd.sentAt}</span>
                   </div>
-                  <span className="text-[10px] text-slate-400">{upd.date}</span>
+                  <h3 className="text-base font-bold text-slate-950">{upd.title}</h3>
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
+                    &quot;{upd.message}&quot;
+                  </p>
+                  <div className="pt-2 flex items-center justify-between text-xs">
+                    <span className="text-emerald-800 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Amélioration basée sur vos retours</span>
+                    </span>
+                    <Link
+                      href={`/app/service/${upd.serviceId}`}
+                      className="font-extrabold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                    >
+                      <span>Donner un retour</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
 
-                <h3 className="text-base font-bold text-slate-950">
-                  {upd.title}
-                </h3>
-
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
-                  &quot;{upd.message}&quot;
-                </p>
-
-                <div className="pt-2 flex items-center justify-between text-xs">
-                  <span className="text-emerald-800 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Amélioration basée sur vos retours</span>
-                  </span>
-                  <Link
-                    href={`/app/service/${upd.id.replace("upd-", "srv-")}`}
-                    className="font-extrabold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+          {/* My Sent Feedbacks */}
+          {myFeedbacks.length > 0 && (
+            <div className="pt-4 space-y-4">
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-950 flex items-center gap-2">
+                <MessageSquareText className="w-5 h-5 text-emerald-600" />
+                Mes Retours Récents
+              </h2>
+              <div className="space-y-3">
+                {myFeedbacks.map((fb) => (
+                  <div
+                    key={fb.id}
+                    className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-2"
                   >
-                    <span>Donner un retour</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* My Past Feedbacks */}
-          <div className="pt-4 space-y-4">
-            <h2 className="text-base sm:text-lg font-extrabold text-slate-950">
-              Mes Retours Récents
-            </h2>
-            {myPastFeedbacks.map((fb) => (
-              <div
-                key={fb.id}
-                className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-2"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-900">{fb.serviceName}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                      <span>Qualité {fb.score}%</span>
-                    </span>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
-                      Approuvé
-                    </span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-900">{fb.serviceName}</span>
+                      <div className="flex items-center gap-2">
+                        {fb.constructiveScore && (
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            <span>Qualité {fb.constructiveScore}%</span>
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                          Approuvé ✓
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-600 italic line-clamp-2">
+                      &quot;{fb.content}&quot;
+                    </p>
+                    <div className="text-[10px] text-slate-400">{fb.createdAt}</div>
                   </div>
-                </div>
-                <p className="text-xs text-slate-600 italic">
-                  &quot;{fb.content}&quot;
-                </p>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Right Column: My Subscribed Services */}
+        {/* Right Column: My Subscriptions */}
         <div className="lg:col-span-4 space-y-4">
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
             <h2 className="text-base font-extrabold text-slate-950 pb-2 border-b border-slate-100">
               Mes Services Abonnés ({subscribedServices.length})
             </h2>
 
-            <div className="space-y-3">
-              {subscribedServices.map((svc) => (
-                <div
-                  key={svc.id}
-                  className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 hover:border-emerald-300 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">
-                      {svc.name}
-                    </span>
-                    {svc.unreadUpdates > 0 && (
-                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        1 MAJ
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-slate-500">{svc.companyName}</div>
-                  <Link
-                    href={`/app/service/${svc.id}`}
-                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-full bg-emerald-100 text-xs font-bold text-slate-950 hover:bg-emerald-200 transition-colors mt-1"
+            {subscribedServices.length === 0 ? (
+              <div className="text-center py-6 space-y-2">
+                <Layers className="w-7 h-7 text-slate-200 mx-auto" />
+                <p className="text-xs text-slate-400">Pas encore abonné à un service.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {subscribedServices.map((svc) => (
+                  <div
+                    key={svc.id}
+                    className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 hover:border-emerald-300 transition-colors"
                   >
-                    <MessageSquarePlus className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>Rédiger un feedback</span>
-                  </Link>
-                </div>
-              ))}
-            </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 line-clamp-1">
+                        {svc.name}
+                      </span>
+                    </div>
+                    {svc.companyName && (
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <Building2 className="w-3 h-3" />
+                        {svc.companyName}
+                      </div>
+                    )}
+                    <Link
+                      href={`/app/service/${svc.id}`}
+                      className="w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-full bg-emerald-100 text-xs font-bold text-slate-950 hover:bg-emerald-200 transition-colors mt-1"
+                    >
+                      <MessageSquarePlus className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Rédiger un feedback</span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <Link
               href="/app/explore"

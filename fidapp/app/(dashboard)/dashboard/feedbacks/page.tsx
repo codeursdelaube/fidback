@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { FeedbackItem, ModerationStatus } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import { pushNotification } from "@/lib/notifications";
 
 interface FeedbackWithAI extends FeedbackItem {
   constructiveScore: number;
@@ -67,6 +68,19 @@ export default function DashboardFeedbacksPage() {
     }
 
     loadCompanyFeedbacks();
+
+    // Listen for new feedbacks from users in real time
+    const onNewFeedback = () => {
+      loadCompanyFeedbacks();
+      pushNotification({
+        type: "feedback",
+        title: "💬 Nouveau feedback reçu !",
+        body: "Un abonné vient de déposer un retour qualitatif sur votre service.",
+        href: "/dashboard/feedbacks",
+      });
+    };
+    window.addEventListener("fidback_feedbacks_updated", onNewFeedback);
+    return () => window.removeEventListener("fidback_feedbacks_updated", onNewFeedback);
   }, [supabase]);
 
   const filteredFeedbacks = feedbacks.filter((fb) => {
