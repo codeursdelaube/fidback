@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MessageSquareText,
   Filter,
@@ -15,8 +15,10 @@ import {
   Sparkles,
   Scale,
   Tag,
+  Loader2,
 } from "lucide-react";
 import { FeedbackItem, ModerationStatus } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
 
 interface FeedbackWithAI extends FeedbackItem {
   constructiveScore: number;
@@ -26,146 +28,96 @@ interface FeedbackWithAI extends FeedbackItem {
 }
 
 export default function DashboardFeedbacksPage() {
+  const supabase = createClient();
+  const [companyId, setCompanyId] = useState<string>("default");
+  const [companyName, setCompanyName] = useState<string>("Mon Entreprise");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [feedbacks, setFeedbacks] = useState<FeedbackWithAI[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [feedbacks, setFeedbacks] = useState<FeedbackWithAI[]>([
-    {
-      id: "fb-1",
-      subscriptionId: "sub-1",
-      serviceName: "Course Moto & Taxi Lomé",
-      userPseudo: "kodjo_dev",
-      userEmail: "kodjo@techlome.tg",
-      content:
-        "L'application réagit beaucoup plus vite depuis la dernière mise à jour. En revanche, lors des paiements par T-Money le matin vers 8h, le code OTP tarde parfois de 45 secondes. Si vous pouvez optimiser ce délai, ce sera parfait !",
-      moderationStatus: "APPROVED",
-      createdAt: "28 Fév 2026 • 08:30",
-      constructiveScore: 95,
-      sentiment: "CONSTRUCTIVE_CRITIQUE",
-      aiHighlight: "Optimisation demandée sur l'envoi de l'OTP T-Money à 8h.",
-      aiTag: "Paiement T-Money",
-    },
-    {
-      id: "fb-2",
-      subscriptionId: "sub-2",
-      serviceName: "Livraison Gozem Food",
-      userPseudo: "amina_lome",
-      userEmail: "amina@gmail.com",
-      content:
-        "Les livreurs sont très polis et professionnels. Ce serait génial d'ajouter une option pour pré-enregistrer un pourboire Flooz directement au moment de la validation du panier.",
-      moderationStatus: "APPROVED",
-      createdAt: "27 Fév 2026 • 14:15",
-      constructiveScore: 92,
-      sentiment: "POSITIVE",
-      aiHighlight: "Suggestion de pourboire direct via Flooz lors du panier.",
-      aiTag: "Suggestion Flooz",
-    },
-    {
-      id: "fb-3",
-      subscriptionId: "sub-3",
-      serviceName: "Course Moto & Taxi Lomé",
-      userPseudo: "eric_k",
-      userEmail: "eric.k@yahoo.fr",
-      content:
-        "J'ai remarqué un petit décalage dans l'affichage du solde après une recharge par carte bancaire. Il faut rafraîchir manuellement l'écran.",
-      moderationStatus: "PENDING",
-      createdAt: "26 Fév 2026 • 19:40",
-      constructiveScore: 84,
-      sentiment: "CONSTRUCTIVE_CRITIQUE",
-      aiHighlight: "Décalage d'affichage du solde après recharge carte.",
-      aiTag: "Performance",
-    },
-    {
-      id: "fb-4",
-      subscriptionId: "sub-4",
-      serviceName: "Gozem Wallet Beta",
-      userPseudo: "selom_togo",
-      userEmail: "selom@startup.tg",
-      content:
-        "Le module de virement inter-utilisateurs fonctionne très bien. Petit point d'ergonomie : le bouton de confirmation est un peu trop bas sur les petits écrans Android.",
-      moderationStatus: "APPROVED",
-      createdAt: "25 Fév 2026 • 11:20",
-      constructiveScore: 94,
-      sentiment: "POSITIVE",
-      aiHighlight: "Ergonomie bouton de confirmation sur petits écrans Android.",
-      aiTag: "Interface UI",
-    },
-    {
-      id: "fb-5",
-      subscriptionId: "sub-5",
-      serviceName: "Livraison Gozem Food",
-      userPseudo: "anonymous_spammer",
-      userEmail: "spam@bot.com",
-      content: "Nul nul nul à chier dégager",
-      moderationStatus: "REJECTED",
-      createdAt: "24 Fév 2026 • 09:10",
-      constructiveScore: 10,
-      sentiment: "NEGATIVE_UNHELPFUL",
-      aiHighlight: "Langage injurieux sans fondement constructif bloqué par l'arbitre IA.",
-      aiTag: "Rejet IA",
-    },
-  ]);
+  useEffect(() => {
+    async function loadCompanyFeedbacks() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-  const handleUpdateStatus = (id: string, newStatus: ModerationStatus) => {
-    setFeedbacks(
-      feedbacks.map((fb) =>
-        fb.id === id ? { ...fb, moderationStatus: newStatus } : fb
-      )
-    );
-  };
+        const cid = user?.id || "guest-company";
+        const cname = user?.user_metadata?.companyName || user?.user_metadata?.name || "Mon Entreprise";
+        setCompanyId(cid);
+        setCompanyName(cname);
+
+        const storageKey = `fidback_feedbacks_${cid}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          try {
+            setFeedbacks(JSON.parse(saved));
+          } catch (e) {
+            setFeedbacks([]);
+          }
+        } else {
+          setFeedbacks([]);
+        }
+      } catch (err) {
+        console.warn("Erreur chargement feedbacks:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadCompanyFeedbacks();
+  }, [supabase]);
 
   const filteredFeedbacks = feedbacks.filter((fb) => {
-    const matchesStatus =
-      filterStatus === "ALL" || fb.moderationStatus === filterStatus;
-    const matchesQuery =
-      fb.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      fb.userPseudo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      fb.serviceName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      fb.aiTag.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesQuery;
+    if (filterStatus !== "ALL" && fb.moderationStatus !== filterStatus) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchContent = fb.content.toLowerCase().includes(q);
+      const matchUser = fb.userPseudo?.toLowerCase().includes(q);
+      const matchService = fb.serviceName?.toLowerCase().includes(q);
+      const matchTag = fb.aiTag?.toLowerCase().includes(q);
+      if (!matchContent && !matchUser && !matchService && !matchTag) return false;
+    }
+    return true;
   });
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header with AI badge */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold uppercase tracking-wider mb-2">
             <Scale className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Centre de Modération IA</span>
+            <span>Modération & Qualité IA</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
-            Feedbacks des Abonnés & Arbitrage IA
+            Feedbacks Qualitatifs Reçus
           </h2>
           <p className="text-xs sm:text-sm text-slate-600">
-            Chaque retour textuel est vérifié en temps réel par l&apos;IA pour garantir des échanges factuels, respectueux et exploitables.
+            Retours d&apos;expérience réels déposés par vos abonnés, vérifiés et arbitrés par le modèle IA.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Arbitre IA Actif</span>
+          </span>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher par mot-clé, pseudo, tag..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs sm:text-sm shadow-xs"
-          />
-        </div>
-
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 rounded-full text-xs font-bold">
+      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        {/* Status filters */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <button
             type="button"
             onClick={() => setFilterStatus("ALL")}
-            className={`px-3.5 py-1.5 rounded-full transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
               filterStatus === "ALL"
                 ? "bg-slate-950 text-white shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
             Tous ({feedbacks.length})
@@ -173,154 +125,108 @@ export default function DashboardFeedbacksPage() {
           <button
             type="button"
             onClick={() => setFilterStatus("APPROVED")}
-            className={`px-3.5 py-1.5 rounded-full transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
               filterStatus === "APPROVED"
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-emerald-500 text-slate-950 font-black shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
-            Approuvés IA
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Approuvés ({feedbacks.filter((f) => f.moderationStatus === "APPROVED").length})</span>
           </button>
           <button
             type="button"
             onClick={() => setFilterStatus("PENDING")}
-            className={`px-3.5 py-1.5 rounded-full transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
               filterStatus === "PENDING"
-                ? "bg-amber-500 text-white shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-amber-400 text-slate-950 font-black shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
             }`}
           >
-            En attente
+            <Clock className="w-3.5 h-3.5" />
+            <span>En attente ({feedbacks.filter((f) => f.moderationStatus === "PENDING").length})</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setFilterStatus("REJECTED")}
-            className={`px-3.5 py-1.5 rounded-full transition-all ${
-              filterStatus === "REJECTED"
-                ? "bg-rose-600 text-white shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Rejetés
-          </button>
+        </div>
+
+        {/* Search input */}
+        <div className="relative min-w-[220px]">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Rechercher un retour..."
+            className="w-full pl-10 pr-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          />
         </div>
       </div>
 
-      {/* Feedbacks List */}
-      <div className="space-y-4">
-        {filteredFeedbacks.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs">
-            <MessageSquareText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <h3 className="font-extrabold text-slate-900">Aucun feedback trouvé</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Modifiez vos critères de recherche ou attendez les prochains retours de vos abonnés.
+      {/* Content Stream */}
+      {loading ? (
+        <div className="py-20 text-center text-slate-400 text-sm">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
+          Chargement de vos retours...
+        </div>
+      ) : feedbacks.length === 0 ? (
+        /* Empty State */
+        <div className="bg-white rounded-3xl p-12 border border-dashed border-slate-300 text-center space-y-4 max-w-xl mx-auto">
+          <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
+            <MessageSquareText className="w-8 h-8" />
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="text-lg font-black text-slate-950">
+              Aucun feedback reçu pour l&apos;instant
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+              Dès que vos abonnés testeront vos services et déposeront des retours qualitatifs, ils apparaîtront ici après analyse constructive et arbitrage par le modèle IA.
             </p>
           </div>
-        ) : (
-          filteredFeedbacks.map((fb) => (
+          <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-[11px] text-emerald-950 font-medium">
+            💡 Astuce : Publiez une annonce ou partagez le lien de votre fiche service à vos clients pour encourager les retours d&apos;expérience.
+          </div>
+        </div>
+      ) : filteredFeedbacks.length === 0 ? (
+        <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center text-slate-500 text-sm">
+          Aucun feedback ne correspond à vos filtres de recherche.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredFeedbacks.map((fb) => (
             <div
               key={fb.id}
-              className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4 hover:border-emerald-300 transition-all"
+              className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-xs space-y-4 hover:border-emerald-300 transition-all"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-extrabold text-sm border border-emerald-200">
+              {/* Top row: User & service info */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-900 font-extrabold flex items-center justify-center text-xs">
                     {fb.userPseudo?.substring(0, 2).toUpperCase() || "US"}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-slate-950 text-sm">
-                        @{fb.userPseudo}
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                        {fb.serviceName}
-                      </span>
-                      <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Tag className="w-2.5 h-2.5" />
-                        {fb.aiTag}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{fb.createdAt}</div>
+                    <span className="font-extrabold text-slate-950">@{fb.userPseudo}</span>
+                    <span className="text-slate-400 ml-2">sur</span>
+                    <span className="font-bold text-emerald-800 ml-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      {fb.serviceName}
+                    </span>
                   </div>
                 </div>
 
-                {/* Moderation Badges & Actions */}
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-200 flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Score IA {fb.constructiveScore}%</span>
+                  <span className="text-[11px] text-slate-400">{fb.createdAt}</span>
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                    Qualité {fb.constructiveScore || 90}%
                   </span>
-
-                  <span
-                    className={`text-xs font-extrabold px-3 py-1 rounded-full border ${
-                      fb.moderationStatus === "APPROVED"
-                        ? "bg-emerald-500 text-slate-950 border-emerald-400"
-                        : fb.moderationStatus === "PENDING"
-                        ? "bg-amber-100 text-amber-900 border-amber-300"
-                        : "bg-rose-100 text-rose-900 border-rose-300"
-                    }`}
-                  >
-                    {fb.moderationStatus === "APPROVED"
-                      ? "Approuvé"
-                      : fb.moderationStatus === "PENDING"
-                      ? "En attente"
-                      : "Rejeté"}
-                  </span>
-
-                  {/* Actions buttons */}
-                  <div className="flex items-center gap-1 ml-1">
-                    <button
-                      type="button"
-                      title="Approuver le feedback"
-                      onClick={() => handleUpdateStatus(fb.id, "APPROVED")}
-                      className={`p-2 rounded-full border transition-all ${
-                        fb.moderationStatus === "APPROVED"
-                          ? "bg-slate-950 text-emerald-400 border-slate-950"
-                          : "border-slate-200 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
-                      }`}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Rejeter le feedback"
-                      onClick={() => handleUpdateStatus(fb.id, "REJECTED")}
-                      className={`p-2 rounded-full border transition-all ${
-                        fb.moderationStatus === "REJECTED"
-                          ? "bg-rose-600 text-white border-rose-600"
-                          : "border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                      }`}
-                    >
-                      <XCircle className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
               </div>
 
-              {/* Feedback text body */}
-              <p className="text-xs sm:text-sm text-slate-800 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
+              {/* Feedback text */}
+              <p className="text-xs sm:text-sm text-slate-800 leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
                 &quot;{fb.content}&quot;
               </p>
-
-              {/* AI Summary Banner */}
-              <div className="p-3 rounded-2xl bg-emerald-50/60 border border-emerald-100 flex items-center justify-between text-xs text-emerald-950">
-                <span className="font-bold flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Synthèse IA :</span>
-                  <span className="font-normal text-emerald-900">{fb.aiHighlight}</span>
-                </span>
-                <span className="text-[10px] font-extrabold text-emerald-700 bg-white border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
-                  {fb.sentiment === "POSITIVE"
-                    ? "Positif"
-                    : fb.sentiment === "CONSTRUCTIVE_CRITIQUE"
-                    ? "Critique Constructive"
-                    : "Inapproprié"}
-                </span>
-              </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

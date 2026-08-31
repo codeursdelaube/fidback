@@ -43,7 +43,7 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function isRateLimited(ip: string, pathname: string): boolean {
   // Only rate-limit auth paths
-  const authPaths = ["/login", "/register", "/register-company", "/auth/callback"];
+  const authPaths = ["/login", "/register", "/register-company", "/signup", "/auth/callback"];
   if (!authPaths.some((p) => pathname.startsWith(p))) return false;
 
   const now = Date.now();
@@ -90,9 +90,10 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute =
     pathname === "/login" ||
     pathname === "/register" ||
-    pathname === "/register-company";
+    pathname === "/register-company" ||
+    pathname.startsWith("/signup");
 
-  // Redirect already authenticated users away from login/register
+  // Redirect already authenticated users away from login/register/signup
   if (isAuthRoute && user) {
     const userRole = user.user_metadata?.role || "user";
     if (userRole === "company") {
@@ -116,21 +117,27 @@ export async function proxy(request: NextRequest) {
     }
 
     const userRole = user.user_metadata?.role || "user";
-    const subscriptionStatus = user.user_metadata?.subscriptionStatus || "INACTIVE";
 
+    // 0. Strict Separation: User vs Company spaces
     if (isDashboardRoute) {
+      // Users cannot access company dashboard -> redirect to user app
       if (userRole === "user") {
         return applySecurityHeaders(NextResponse.redirect(new URL("/app", request.url)));
       }
-      // Block if subscription is not ACTIVE
+
+      // TEMP: accès ouvert pour les startups pilotes, réactiver la vérification subscriptionStatus avant le lancement payant
+      /*
+      const subscriptionStatus = user.user_metadata?.subscriptionStatus || "INACTIVE";
       if (subscriptionStatus !== "ACTIVE") {
         const checkoutUrl = new URL("/checkout", request.url);
         checkoutUrl.searchParams.set("reason", "inactive_subscription");
         return applySecurityHeaders(NextResponse.redirect(checkoutUrl));
       }
+      */
     }
 
     if (isUserAppRoute) {
+      // Companies cannot access user tester space -> redirect to company dashboard
       if (userRole === "company") {
         return applySecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)));
       }
@@ -147,6 +154,7 @@ export const config = {
     "/login",
     "/register",
     "/register-company",
+    "/signup/:path*",
     "/auth/:path*",
   ],
 };

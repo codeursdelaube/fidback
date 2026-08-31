@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   BellRing,
   Send,
@@ -10,59 +11,111 @@ import {
   Users,
   Sparkles,
   ArrowRight,
+  Plus,
+  Loader2,
 } from "lucide-react";
-import { UpdateAnnouncementItem } from "@/lib/types";
+import toast from "react-hot-toast";
+import { UpdateAnnouncementItem, ServiceItem } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
 
 export default function DashboardUpdatesPage() {
-  const [selectedServiceId, setSelectedServiceId] = useState("srv-1");
+  const supabase = createClient();
+  const [companyId, setCompanyId] = useState<string>("default");
+  const [companyName, setCompanyName] = useState<string>("Mon Entreprise");
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [announcements, setAnnouncements] = useState<UpdateAnnouncementItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [sentSuccess, setSentSuccess] = useState(false);
 
-  const [announcements, setAnnouncements] = useState<UpdateAnnouncementItem[]>([
-    {
-      id: "upd-1",
-      serviceId: "srv-1",
-      serviceName: "Course Moto & Taxi Lomé",
-      title: "Optimisation de la passerelle de paiement T-Money",
-      message:
-        "Suite à vos précieux feedbacks concernant le délai de réception de l'OTP le matin, notre équipe technique a migré vers un serveur direct. Les transactions se valident désormais sous 5 secondes chrono !",
-      sentAt: "26 Fév 2026 • 10:00",
-    },
-    {
-      id: "upd-2",
-      serviceId: "srv-2",
-      serviceName: "Livraison Gozem Food",
-      title: "Ajout de 8 nouveaux restaurants partenaires à Lomé",
-      message:
-        "Vous nous aviez demandé plus de choix culinaires togolais et ouest-africains. Nous venons d'intégrer 8 nouvelles enseignes traditionnelles !",
-      sentAt: "20 Fév 2026 • 16:30",
-    },
-  ]);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        const cid = user?.id || "guest-company";
+        const cname = user?.user_metadata?.companyName || user?.user_metadata?.name || "Mon Entreprise";
+        setCompanyId(cid);
+        setCompanyName(cname);
+
+        // Load services
+        const servicesKey = `fidback_services_${cid}`;
+        const savedServices = localStorage.getItem(servicesKey);
+        if (savedServices) {
+          try {
+            const parsedServices: ServiceItem[] = JSON.parse(savedServices);
+            setServices(parsedServices);
+            if (parsedServices.length > 0) {
+              setSelectedServiceId(parsedServices[0].id);
+            }
+          } catch (e) {
+            setServices([]);
+          }
+        } else {
+          setServices([]);
+        }
+
+        // Load announcements
+        const updatesKey = `fidback_updates_${cid}`;
+        const savedUpdates = localStorage.getItem(updatesKey);
+        if (savedUpdates) {
+          try {
+            setAnnouncements(JSON.parse(savedUpdates));
+          } catch (e) {
+            setAnnouncements([]);
+          }
+        } else {
+          setAnnouncements([]);
+        }
+      } catch (err) {
+        console.warn("Erreur chargement updates:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [supabase]);
+
+  const saveAnnouncements = (newUpdates: UpdateAnnouncementItem[]) => {
+    setAnnouncements(newUpdates);
+    if (companyId) {
+      localStorage.setItem(`fidback_updates_${companyId}`, JSON.stringify(newUpdates));
+      window.dispatchEvent(new Event("fidback_updates_updated"));
+    }
+  };
 
   const handlePublishUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !message.trim()) return;
+    if (!title.trim() || !message.trim()) {
+      toast.error("Veuillez renseigner un titre et un message.");
+      return;
+    }
+
+    const currentService = services.find((s) => s.id === selectedServiceId);
+    const serviceName = currentService ? currentService.name : "Service Principal";
 
     const newAnnouncement: UpdateAnnouncementItem = {
       id: `upd-${Date.now()}`,
-      serviceId: selectedServiceId,
-      serviceName:
-        selectedServiceId === "srv-1"
-          ? "Course Moto & Taxi Lomé"
-          : selectedServiceId === "srv-2"
-          ? "Livraison Gozem Food"
-          : "Gozem Wallet Beta",
+      serviceId: selectedServiceId || "default-srv",
+      serviceName,
       title: title.trim(),
       message: message.trim(),
       sentAt: "À l'instant",
     };
 
-    setAnnouncements([newAnnouncement, ...announcements]);
+    const updated = [newAnnouncement, ...announcements];
+    saveAnnouncements(updated);
+
     setTitle("");
     setMessage("");
-    setSentSuccess(true);
-    setTimeout(() => setSentSuccess(false), 3500);
+    toast.success(`Annonce diffusée en direct aux abonnés de « ${serviceName} » !`, {
+      icon: "📢",
+    });
   };
 
   return (
@@ -98,65 +151,75 @@ export default function DashboardUpdatesPage() {
             </div>
           </div>
 
-          {sentSuccess && (
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span>Annonce diffusée avec succès à vos abonnés !</span>
-            </div>
-          )}
-
-          <form onSubmit={handlePublishUpdate} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Service concerné
-              </label>
-              <select
-                value={selectedServiceId}
-                onChange={(e) => setSelectedServiceId(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          {services.length === 0 ? (
+            <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-3">
+              <p className="font-semibold">
+                Vous n&apos;avez pas encore publié de fiche service pour <strong>{companyName}</strong>.
+              </p>
+              <Link
+                href="/dashboard/services"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-950 text-white font-bold text-xs hover:bg-emerald-950 transition-colors"
               >
-                <option value="srv-1">Course Moto & Taxi Lomé (890 abonnés)</option>
-                <option value="srv-2">Livraison Gozem Food (530 abonnés)</option>
-                <option value="srv-3">Gozem Wallet Beta (45 abonnés)</option>
-              </select>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Créer une fiche service</span>
+              </Link>
             </div>
+          ) : (
+            <form onSubmit={handlePublishUpdate} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Service concerné
+                </label>
+                <select
+                  value={selectedServiceId}
+                  onChange={(e) => setSelectedServiceId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                >
+                  {services.map((svc) => (
+                    <option key={svc.id} value={svc.id}>
+                      {svc.name} ({svc._count?.subscriptions || 0} abonnés)
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Titre de la mise à jour
-              </label>
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Version 2.4 : Paiement T-Money accéléré !"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Titre de la mise à jour
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ex: Version 2.0 : Fonctionnalité demandée désormais disponible !"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Message / Explication du changement
-              </label>
-              <textarea
-                rows={4}
-                required
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Expliquez à vos abonnés ce qui a changé grâce à leurs retours qualitatifs..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Message / Explication du changement
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Expliquez à vos abonnés ce qui a changé ou s'est amélioré grâce à leurs retours..."
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                />
+              </div>
 
-            <button
-              type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full font-bold text-sm text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-sm transition-all"
-            >
-              <Send className="w-4 h-4" />
-              <span>Diffuser la mise à jour aux abonnés</span>
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full font-bold text-sm text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-sm transition-all"
+              >
+                <Send className="w-4 h-4" />
+                <span>Diffuser la mise à jour aux abonnés</span>
+              </button>
+            </form>
+          )}
         </div>
 
         {/* History of published announcements */}
@@ -165,29 +228,43 @@ export default function DashboardUpdatesPage() {
             Historique des annonces diffusées ({announcements.length})
           </h3>
 
-          <div className="space-y-4">
-            {announcements.map((ann) => (
-              <div
-                key={ann.id}
-                className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-300 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                    {ann.serviceName}
-                  </span>
-                  <span className="text-[10px] text-slate-400">{ann.sentAt}</span>
+          {loading ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-emerald-600" />
+              Chargement...
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="bg-white rounded-3xl p-8 border border-dashed border-slate-300 text-center space-y-3">
+              <BellRing className="w-8 h-8 text-slate-300 mx-auto" />
+              <p className="text-xs text-slate-500">
+                Aucune annonce publiée pour l&apos;instant. Vos messages diffusés s&apos;afficheront ici.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {announcements.map((ann) => (
+                <div
+                  key={ann.id}
+                  className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-300 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                      {ann.serviceName}
+                    </span>
+                    <span className="text-[10px] text-slate-400">{ann.sentAt}</span>
+                  </div>
+
+                  <h4 className="text-base font-bold text-slate-950">
+                    {ann.title}
+                  </h4>
+
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100">
+                    {ann.message}
+                  </p>
                 </div>
-
-                <h4 className="text-base font-bold text-slate-950">
-                  {ann.title}
-                </h4>
-
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100">
-                  {ann.message}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

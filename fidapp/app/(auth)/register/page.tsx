@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import OtpVerify from "@/components/auth/OtpVerify";
+import toast from "react-hot-toast";
+import EmailVerifyWaiting from "@/components/auth/EmailVerifyWaiting";
 import { createClient } from "@/lib/supabase/client";
 
 /* ─── Simple client-side rate limiter ─────────────────────────────────────── */
@@ -96,23 +97,40 @@ export default function RegisterUserPage() {
 
     /* Rate limiting */
     const rl = checkReg();
-    if (rl) { setError(rl); return; }
+    if (rl) {
+      setError(rl);
+      toast.error(rl);
+      return;
+    }
 
     /* Validation */
     const cleanPseudo = sanitize(pseudo).toLowerCase().replace(/^@/, "");
     const cleanEmail = sanitize(email).toLowerCase();
 
     const pseudoErr = validatePseudo(cleanPseudo);
-    if (pseudoErr) { setError(pseudoErr); return; }
+    if (pseudoErr) {
+      setError(pseudoErr);
+      toast.error(pseudoErr);
+      return;
+    }
 
     const emailErr = validateEmail(cleanEmail);
-    if (emailErr) { setError(emailErr); return; }
+    if (emailErr) {
+      setError(emailErr);
+      toast.error(emailErr);
+      return;
+    }
 
     const passErr = validatePassword(password);
-    if (passErr) { setError(passErr); return; }
+    if (passErr) {
+      setError(passErr);
+      toast.error(passErr);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
+      toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
 
@@ -138,18 +156,30 @@ export default function RegisterUserPage() {
         if (authError.message.includes("Password should be")) {
           throw new Error("Le mot de passe ne respecte pas les critères de sécurité de la plateforme.");
         }
+        if (
+          authError.message.toLowerCase().includes("error sending confirmation email") ||
+          authError.message.toLowerCase().includes("error sending confirmation")
+        ) {
+          throw new Error(
+            "Erreur d'envoi de l'email Supabase (SMTP/Resend). Vérifiez la configuration SMTP dans votre Dashboard Supabase ou désactivez temporairement « Confirm email » dans Authentication > Providers > Email pour une validation directe sans envoi de mail."
+          );
+        }
         throw new Error(authError.message);
       }
 
-      // If Supabase confirms the user is already confirmed (e.g., magic link off)
+      // If Supabase confirms the user is already confirmed
       if (data?.user && data.user.confirmed_at) {
+        toast.success("Compte créé avec succès ! Bienvenue sur Fidback.");
         router.push("/app");
       } else {
         // Email confirmation required
+        toast.success("Lien de confirmation envoyé par email !");
         setSuccess(true);
       }
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de la création du compte.");
+      const msg = err.message || "Une erreur est survenue lors de la création du compte.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -168,10 +198,9 @@ export default function RegisterUserPage() {
               <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
             </Link>
           </div>
-          <OtpVerify
+          <EmailVerifyWaiting
             email={email}
-            redirectTo="/app"
-            otpType="signup"
+            role="user"
             onBack={() => setSuccess(false)}
           />
         </div>

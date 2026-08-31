@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import {
@@ -123,19 +124,22 @@ export function Hero() {
               </div>
 
               {/* Center Megaphone graphic illustration */}
-              <div className="py-6 flex flex-col items-center justify-center text-center relative">
-                <div className="relative w-32 h-32 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-lime-300 p-1 shadow-lg shadow-emerald-500/30 flex items-center justify-center">
-                  <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden relative">
-                    <div className="text-center space-y-1">
-                      <Radio className="w-9 h-9 text-emerald-400 mx-auto" />
-                      <span className="text-[10px] font-extrabold text-emerald-300 block">
-                        VOIX DU CLIENT
-                      </span>
-                    </div>
+              <div className="py-4 flex flex-col items-center justify-center text-center relative">
+                <div className="relative w-44 h-40 flex items-center justify-center">
+                  <div className="absolute w-36 h-36 rounded-full bg-emerald-400/20 blur-xl animate-pulse" />
+                  <div className="relative w-36 h-36 drop-shadow-xl hover:scale-105 transition-transform duration-300">
+                    <Image
+                      src="/megaphone-removebg-preview.png"
+                      alt="Megaphone Voix du Client Fidback"
+                      fill
+                      sizes="(max-width: 768px) 144px, 144px"
+                      className="object-contain"
+                      priority
+                    />
                   </div>
                 </div>
 
-                <div className="mt-4 text-center">
+                <div className="mt-1 text-center">
                   <span className="text-xs font-extrabold text-slate-900 block">
                     Modération qualitative par IA
                   </span>

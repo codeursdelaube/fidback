@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,8 +16,11 @@ import {
   SlidersHorizontal,
   Building2,
   ShieldCheck,
+  Camera,
+  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
 
 export default function DashboardLayout({
   children,
@@ -27,14 +30,18 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const sidebarFileInputRef = useRef<HTMLInputElement>(null);
 
   const [companyName, setCompanyName] = useState("Mon Entreprise");
   const [companyCity, setCompanyCity] = useState("Lomé, Togo");
-  const [logoUrl, setLogoUrl] = useState("/img-entrepreneur.jpg");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const loadProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         const meta = user.user_metadata || {};
         if (meta.companyName || meta.name) {
@@ -64,6 +71,63 @@ export default function DashboardLayout({
     return () => window.removeEventListener("fidback_profile_updated", handleUpdate);
   }, []);
 
+  const handleSidebarLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    const toastId = toast.loading("Téléversement du logo vers le bucket...");
+
+    try {
+      const bucketName =
+        process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "fidback-startup-img";
+      const fileExt = file.name.split(".").pop();
+      const fileName = `logos/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      let newPublicUrl = "";
+      if (!error && data?.path) {
+        const { data: pubData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(data.path);
+        newPublicUrl = pubData.publicUrl;
+      } else {
+        newPublicUrl = URL.createObjectURL(file);
+      }
+
+      setLogoUrl(newPublicUrl);
+
+      // Save to Supabase metadata
+      await supabase.auth.updateUser({
+        data: { logoUrl: newPublicUrl },
+      });
+
+      // Update localStorage
+      const cached = localStorage.getItem("fidback_company_profile");
+      const prevData = cached ? JSON.parse(cached) : {};
+      localStorage.setItem(
+        "fidback_company_profile",
+        JSON.stringify({ ...prevData, logoUrl: newPublicUrl })
+      );
+
+      window.dispatchEvent(new Event("fidback_profile_updated"));
+      toast.success("Logo de l'entreprise mis à jour avec succès !", { id: toastId, icon: "🖼️" });
+    } catch (err: any) {
+      console.warn("Upload logo error:", err);
+      const fallbackUrl = URL.createObjectURL(file);
+      setLogoUrl(fallbackUrl);
+      toast.success("Logo mis à jour localement !", { id: toastId, icon: "🖼️" });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -72,6 +136,13 @@ export default function DashboardLayout({
     }
     router.push("/login?role=company");
   };
+
+  const initials = (companyName || "Entreprise")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
 
   const navigation = [
     { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
@@ -84,6 +155,15 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] flex flex-col md:flex-row font-sans">
+      {/* Hidden file input for logo */}
+      <input
+        type="file"
+        ref={sidebarFileInputRef}
+        onChange={handleSidebarLogoUpload}
+        accept="image/*"
+        className="hidden"
+      />
+
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-slate-950 text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-900">
         <div>
@@ -112,17 +192,39 @@ export default function DashboardLayout({
               </div>
             </Link>
 
-            {/* Current Company badge */}
-            <div className="mt-4 p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+            {/* Current Company badge with Logo & upload trigger */}
+            <div className="mt-4 p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between group">
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 border border-slate-700 bg-slate-800">
-                  <Image
-                    src={logoUrl}
-                    alt={companyName}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => sidebarFileInputRef.current?.click()}
+                  title="Changer le logo de l'entreprise"
+                  disabled={uploadingLogo}
+                  className="relative w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-slate-700 bg-emerald-950 flex items-center justify-center text-emerald-300 font-black text-xs hover:border-emerald-400 transition-all cursor-pointer group/avatar"
+                >
+                  {uploadingLogo ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                  ) : logoUrl ? (
+                    <>
+                      <Image
+                        src={logoUrl}
+                        alt={companyName}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
+                        <Camera className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span>{initials}</span>
+                      <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
+                        <Camera className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    </>
+                  )}
+                </button>
                 <div className="overflow-hidden">
                   <div className="text-xs font-bold text-white truncate">{companyName}</div>
                   <div className="text-[10px] text-slate-400 truncate">{companyCity}</div>
@@ -163,13 +265,13 @@ export default function DashboardLayout({
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-900 space-y-2">
           <Link
-            href="/app"
+            href="/"
             target="_blank"
             className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-all"
           >
             <span className="flex items-center gap-2">
               <Compass className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Voir l&apos;espace public</span>
+              <span>Voir le portail public</span>
             </span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
           </Link>

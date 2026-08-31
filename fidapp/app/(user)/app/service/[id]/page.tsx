@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { FeedbackItem, UpdateAnnouncementItem } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
 
 interface ModerationResult {
   status: "APPROVED" | "REJECTED";
@@ -132,6 +133,9 @@ export default function ServiceDetailPage() {
 
       // 2. If rejected (injurious, unconstructive, diffamatory)
       if (result.status === "REJECTED") {
+        toast.error("Feedback bloqué par l'Arbitre IA. Veuillez reformuler.", {
+          duration: 5000,
+        });
         setSubmitting(false);
         return; // Block submission
       }
@@ -151,6 +155,10 @@ export default function ServiceDetailPage() {
       setFeedbacks([newFb, ...feedbacks]);
       setFeedbackContent("");
       setSubmittedSuccess(true);
+      toast.success("Feedback qualitatif certifié IA et transmis à l'équipe !", {
+        icon: "✨",
+        duration: 5000,
+      });
       setTimeout(() => {
         setSubmittedSuccess(false);
         setModerationResult(null);
@@ -171,6 +179,7 @@ export default function ServiceDetailPage() {
       setFeedbacks([newFb, ...feedbacks]);
       setFeedbackContent("");
       setSubmittedSuccess(true);
+      toast.success("Feedback envoyé avec succès !", { icon: "✨" });
       setTimeout(() => setSubmittedSuccess(false), 4000);
     } finally {
       setSubmitting(false);
@@ -223,7 +232,15 @@ export default function ServiceDetailPage() {
             </div>
             <button
               type="button"
-              onClick={() => setIsSubscribed(!isSubscribed)}
+              onClick={() => {
+                const nextState = !isSubscribed;
+                setIsSubscribed(nextState);
+                if (nextState) {
+                  toast.success("Abonnement activé ! Vous recevrez les annonces et pouvez déposer vos feedbacks.", { icon: "🔔" });
+                } else {
+                  toast("Désabonné de ce service.", { icon: "ℹ️" });
+                }
+              }}
               className={`px-5 py-2.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-2 ${
                 isSubscribed
                   ? "bg-emerald-50 text-emerald-800 border border-emerald-200"

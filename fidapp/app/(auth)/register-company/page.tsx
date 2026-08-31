@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   Mail,
@@ -18,8 +18,9 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
-import OtpVerify from "@/components/auth/OtpVerify";
+import EmailVerifyWaiting from "@/components/auth/EmailVerifyWaiting";
 
 /* ─── Rate limiter ─────────────────────────────────────────────────────────── */
 const compStore = { count: 0, lockedUntil: 0 };
@@ -45,8 +46,6 @@ function sanitize(s: string) {
 /* ─── Form ─────────────────────────────────────────────────────────────────── */
 function RegisterCompanyForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedPlan = searchParams.get("plan") || "pro";
 
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
@@ -84,25 +83,38 @@ function RegisterCompanyForm() {
     setError(null);
 
     const rl = checkCompReg();
-    if (rl) { setError(rl); return; }
+    if (rl) {
+      setError(rl);
+      toast.error(rl);
+      return;
+    }
 
     const cleanName = sanitize(companyName);
     const cleanEmail = sanitize(email).toLowerCase();
 
     if (cleanName.length < 2) {
-      setError("Le nom de l'entreprise doit contenir au moins 2 caractères.");
+      const err = "Le nom de l'entreprise doit contenir au moins 2 caractères.";
+      setError(err);
+      toast.error(err);
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      setError("Adresse email professionnelle invalide.");
+      const err = "Adresse email professionnelle invalide.";
+      setError(err);
+      toast.error(err);
       return;
     }
     const passErr = validatePassword(password);
-    if (passErr) { setError(passErr); return; }
+    if (passErr) {
+      setError(passErr);
+      toast.error(passErr);
+      return;
+    }
 
     setLoading(true);
 
     try {
+      // Direct ACTIVE access for pilot startups without blocking payment
       const { data, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -111,9 +123,9 @@ function RegisterCompanyForm() {
             name: cleanName,
             companyName: cleanName,
             role: "company",
-            subscriptionStatus: "INACTIVE",
+            subscriptionStatus: "ACTIVE", // Startups pilotes : statut actif immédiat
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/checkout?plan=${selectedPlan}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
 
@@ -131,26 +143,35 @@ function RegisterCompanyForm() {
             "Le mot de passe ne respecte pas les critères de sécurité de la plateforme."
           );
         }
+        if (
+          authError.message.toLowerCase().includes("error sending confirmation email") ||
+          authError.message.toLowerCase().includes("error sending confirmation")
+        ) {
+          throw new Error(
+            "Erreur d'envoi de l'email Supabase (SMTP/Resend). Vérifiez la configuration SMTP dans votre Dashboard Supabase ou désactivez temporairement « Confirm email » dans Authentication > Providers > Email pour une validation instantanée sans envoi de mail."
+          );
+        }
         throw new Error(authError.message);
       }
 
-      // If auto-confirmed, go straight to checkout
+      // If auto-confirmed, go straight to dashboard
       if (data?.user && data.user.confirmed_at) {
-        router.push(
-          `/checkout?plan=${selectedPlan}&companyName=${encodeURIComponent(cleanName)}&email=${encodeURIComponent(cleanEmail)}`
-        );
+        toast.success(`Bienvenue sur Fidback, ${cleanName} !`);
+        router.push("/dashboard");
       } else {
+        toast.success("Lien d'activation envoyé à l'adresse professionnelle !");
         setSuccess(true);
       }
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de l'enregistrement de l'entreprise.");
+      const msg = err.message || "Une erreur est survenue lors de l'enregistrement de l'entreprise.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   if (success) {
-    const nextUrl = `/checkout?plan=${selectedPlan}&companyName=${encodeURIComponent(sanitize(companyName))}&email=${encodeURIComponent(sanitize(email).toLowerCase())}`;
     return (
       <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#F8FAF9] relative overflow-hidden font-sans">
         <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
@@ -162,10 +183,9 @@ function RegisterCompanyForm() {
               <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
             </Link>
           </div>
-          <OtpVerify
+          <EmailVerifyWaiting
             email={sanitize(email).toLowerCase()}
-            redirectTo={nextUrl}
-            otpType="signup"
+            role="company"
             onBack={() => setSuccess(false)}
           />
         </div>
@@ -265,14 +285,14 @@ function RegisterCompanyForm() {
           )}
         </div>
 
-        {/* Info box */}
+        {/* Info box: Pilot Program */}
         <div className="p-4 rounded-2xl mint-card border border-emerald-200 text-xs text-emerald-950 space-y-1.5">
           <div className="font-extrabold flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Rejoignez le Programme Pilote Fidback Togo</span>
+            <span>Programme Pilote Startups Togo 🇹🇬 — Accès Offert</span>
           </div>
-          <p className="text-emerald-900/90 text-[11px]">
-            Après cette étape, vous choisirez votre formule d&apos;abonnement pour activer votre tableau de bord et publier vos fiches services.
+          <p className="text-emerald-900/90 text-[11px] leading-relaxed">
+            Votre inscription donne un <strong>accès complet et immédiat</strong> au tableau de bord, à la création de fiches services et à la réception des feedbacks abonnés.
           </p>
         </div>
 
@@ -281,7 +301,7 @@ function RegisterCompanyForm() {
           disabled={loading}
           className="w-full mt-3 inline-flex items-center justify-center gap-2 pl-6 pr-3 py-3.5 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
         >
-          <span>{loading ? "Création en cours..." : "Continuer vers le choix de formule"}</span>
+          <span>{loading ? "Création en cours..." : "Créer le compte Entreprise (Accès Direct)"}</span>
           <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
           </span>
@@ -323,12 +343,15 @@ export default function RegisterCompanyPage() {
             <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
           </Link>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-extrabold border border-emerald-300 mb-3">
-            <span>Programme Entreprises du Togo 🇹🇬</span>
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Programme Pilote Startups 🇹🇬</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
             Inscrivez votre entreprise
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-slate-600">Étape 1 sur 2 : Informations de l&apos;entreprise</p>
+          <p className="mt-2 text-xs sm:text-sm text-slate-600">
+            Activez votre espace entreprise et collectez des feedbacks constructifs
+          </p>
         </div>
       </div>
 

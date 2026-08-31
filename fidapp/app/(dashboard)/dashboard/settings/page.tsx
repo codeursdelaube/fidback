@@ -18,25 +18,24 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
 
 export default function DashboardSettingsPage() {
   const supabase = createClient();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const [companyName, setCompanyName] = useState("Gozem Togo");
-  const [tagline, setTagline] = useState("L'application tout-en-un pour vos déplacements et livraisons à Lomé");
-  const [category, setCategory] = useState("Transport & Mobilité");
+  const [companyName, setCompanyName] = useState("");
+  const [tagline, setTagline] = useState("");
+  const [category, setCategory] = useState("Technologie & App");
   const [city, setCity] = useState("Lomé, Togo");
-  const [description, setDescription] = useState(
-    "Gozem est la Super App de l'Afrique de l'Ouest proposant des services de transport de personnes (motos, taxis), livraison de repas et paiements mobiles sécurisés."
-  );
-  const [email, setEmail] = useState("contact@gozem.tg");
-  const [phone, setPhone] = useState("+228 90 12 34 56");
-  const [website, setWebsite] = useState("https://gozem.tg");
+  const [description, setDescription] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("+228 ");
+  const [website, setWebsite] = useState("https://");
 
-  const [logoUrl, setLogoUrl] = useState<string>("/logo.png");
-  const [coverUrl, setCoverUrl] = useState<string>("/img-entrepreneur.jpg");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -46,10 +45,14 @@ export default function DashboardSettingsPage() {
   useEffect(() => {
     async function loadCompanyProfile() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (user) {
           const meta = user.user_metadata || {};
-          if (meta.companyName || meta.name) setCompanyName(meta.companyName || meta.name);
+          const cname = meta.companyName || meta.name || "Mon Entreprise";
+          setCompanyName(cname);
           if (meta.tagline) setTagline(meta.tagline);
           if (meta.category) setCategory(meta.category);
           if (meta.city) setCity(meta.city);
@@ -69,6 +72,7 @@ export default function DashboardSettingsPage() {
             if (parsed.coverUrl) setCoverUrl(parsed.coverUrl);
             if (parsed.tagline) setTagline(parsed.tagline);
             if (parsed.city) setCity(parsed.city);
+            if (parsed.email) setEmail(parsed.email);
           }
         }
       } catch (err) {
@@ -87,6 +91,8 @@ export default function DashboardSettingsPage() {
     if (isLogo) setUploadingLogo(true);
     else setUploadingCover(true);
 
+    const toastId = toast.loading(`Téléversement ${isLogo ? "du logo" : "de la bannière"} vers le bucket Supabase...`);
+
     try {
       const bucketName =
         process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "fidback-startup-img";
@@ -97,29 +103,48 @@ export default function DashboardSettingsPage() {
         .from(bucketName)
         .upload(fileName, file, {
           cacheControl: "3600",
-          upsert: false,
+          upsert: true,
         });
 
+      let publicUrl = "";
       if (!error && data?.path) {
         const { data: pubData } = supabase.storage
           .from(bucketName)
           .getPublicUrl(data.path);
 
         if (pubData?.publicUrl) {
-          if (isLogo) setLogoUrl(pubData.publicUrl);
-          else setCoverUrl(pubData.publicUrl);
+          publicUrl = pubData.publicUrl;
         }
       } else {
-        // Local preview fallback
-        const localUrl = URL.createObjectURL(file);
-        if (isLogo) setLogoUrl(localUrl);
-        else setCoverUrl(localUrl);
+        publicUrl = URL.createObjectURL(file);
       }
-    } catch (err) {
+
+      if (isLogo) {
+        setLogoUrl(publicUrl);
+        await supabase.auth.updateUser({ data: { logoUrl: publicUrl } });
+      } else {
+        setCoverUrl(publicUrl);
+        await supabase.auth.updateUser({ data: { coverUrl: publicUrl } });
+      }
+
+      const cached = localStorage.getItem("fidback_company_profile");
+      const prevData = cached ? JSON.parse(cached) : {};
+      localStorage.setItem(
+        "fidback_company_profile",
+        JSON.stringify({ ...prevData, [isLogo ? "logoUrl" : "coverUrl"]: publicUrl })
+      );
+
+      window.dispatchEvent(new Event("fidback_profile_updated"));
+      toast.success(`${isLogo ? "Logo officiel" : "Bannière"} mis(e) à jour avec succès !`, {
+        id: toastId,
+        icon: "🖼️",
+      });
+    } catch (err: any) {
       console.warn("Storage upload fallback:", err);
       const localUrl = URL.createObjectURL(file);
       if (isLogo) setLogoUrl(localUrl);
       else setCoverUrl(localUrl);
+      toast.success(`${isLogo ? "Logo" : "Bannière"} mis(e) à jour !`, { id: toastId, icon: "🖼️" });
     } finally {
       if (isLogo) setUploadingLogo(false);
       else setUploadingCover(false);
@@ -142,6 +167,7 @@ export default function DashboardSettingsPage() {
       website: website.trim(),
       logoUrl,
       coverUrl,
+      email,
     };
 
     try {
@@ -160,6 +186,7 @@ export default function DashboardSettingsPage() {
       window.dispatchEvent(new Event("fidback_profile_updated"));
 
       setSaveSuccess(true);
+      toast.success("Profil entreprise enregistré avec succès !", { icon: "💾" });
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err) {
       console.error("Erreur sauvegarde profil:", err);
@@ -169,11 +196,19 @@ export default function DashboardSettingsPage() {
       );
       window.dispatchEvent(new Event("fidback_profile_updated"));
       setSaveSuccess(true);
+      toast.success("Profil entreprise enregistré avec succès !", { icon: "💾" });
       setTimeout(() => setSaveSuccess(false), 4000);
     } finally {
       setSaving(false);
     }
   };
+
+  const initials = (companyName || "Entreprise")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -187,7 +222,7 @@ export default function DashboardSettingsPage() {
           Personnalisation du Profil Entreprise
         </h2>
         <p className="text-xs sm:text-sm text-slate-600">
-          Personnalisez votre identité de marque (logo, bannière, coordonnées) visible par vos clients et abonnés togolais.
+          Personnalisez votre identité de marque (logo officiel, bannière, coordonnées) stockée dans le bucket Supabase et visible par vos abonnés togolais.
         </p>
       </div>
 
@@ -214,7 +249,7 @@ export default function DashboardSettingsPage() {
               const file = e.target.files?.[0];
               if (file) handleUploadImage(file, "cover");
             }}
-            accept="image/png, image/jpeg, image/webp"
+            accept="image/*"
             className="hidden"
           />
           <input
@@ -224,14 +259,14 @@ export default function DashboardSettingsPage() {
               const file = e.target.files?.[0];
               if (file) handleUploadImage(file, "logo");
             }}
-            accept="image/png, image/jpeg, image/webp"
+            accept="image/*"
             className="hidden"
           />
 
           {/* Cover & Logo Preview Card */}
           <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-950 shadow-xs">
             {/* Banner Cover */}
-            <div className="relative w-full h-44 sm:h-52 bg-slate-900">
+            <div className="relative w-full h-44 sm:h-52 bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-900">
               {coverUrl && (
                 <Image
                   src={coverUrl}
@@ -246,14 +281,14 @@ export default function DashboardSettingsPage() {
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
                 disabled={uploadingCover}
-                className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/80 hover:bg-slate-950 text-white text-xs font-bold backdrop-blur-md border border-white/20 shadow-xs transition-all"
+                className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-slate-950/80 hover:bg-slate-950 text-white text-xs font-bold backdrop-blur-md border border-white/20 shadow-xs transition-all cursor-pointer"
               >
                 {uploadingCover ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Camera className="w-3.5 h-3.5" />
+                  <Camera className="w-3.5 h-3.5 text-emerald-400" />
                 )}
-                <span>Changer la bannière</span>
+                <span>Téléverser une bannière</span>
               </button>
             </div>
 
@@ -261,25 +296,29 @@ export default function DashboardSettingsPage() {
             <div className="p-6 pt-0 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 relative z-10">
               <div className="flex items-end gap-4">
                 {/* Logo Box */}
-                <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-4 border-white bg-white shadow-xl group">
-                  <Image
-                    src={logoUrl}
-                    alt="Logo officiel"
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-4 border-white bg-emerald-950 shadow-xl group flex items-center justify-center text-emerald-300 font-black text-2xl">
+                  {logoUrl ? (
+                    <Image
+                      src={logoUrl}
+                      alt="Logo officiel"
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
                   <button
                     type="button"
                     onClick={() => logoInputRef.current?.click()}
                     disabled={uploadingLogo}
-                    className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold gap-1"
+                    className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold gap-1 cursor-pointer"
                   >
                     {uploadingLogo ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        <Camera className="w-4 h-4" />
-                        <span>Modifier</span>
+                        <Camera className="w-4 h-4 text-emerald-400" />
+                        <span>Changer Logo</span>
                       </>
                     )}
                   </button>
@@ -287,7 +326,7 @@ export default function DashboardSettingsPage() {
 
                 <div className="pb-1 text-white">
                   <div className="text-xl font-extrabold tracking-tight">
-                    {companyName || "Nom de l'entreprise"}
+                    {companyName || "Nom de votre entreprise"}
                   </div>
                   <div className="text-xs text-emerald-300 font-bold flex items-center gap-2 mt-0.5">
                     <span>{category}</span>
@@ -297,9 +336,9 @@ export default function DashboardSettingsPage() {
                 </div>
               </div>
 
-              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 backdrop-blur-sm">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Entreprise Vérifiée 🇹🇬</span>
+                <span>Programme Pilote Startups 🇹🇬</span>
               </div>
             </div>
           </div>
@@ -321,8 +360,20 @@ export default function DashboardSettingsPage() {
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Ex: Gozem Togo, Le Palmier Gourmand..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-semibold"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Slogan / Accroche courte
+              </label>
+              <input
+                type="text"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                placeholder="Ex: La plateforme de livraison express à Lomé"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               />
             </div>
 
@@ -333,85 +384,53 @@ export default function DashboardSettingsPage() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               >
+                <option value="Technologie & App">Technologie & App</option>
                 <option value="Transport & Mobilité">Transport & Mobilité</option>
                 <option value="Restauration & FoodTech">Restauration & FoodTech</option>
                 <option value="Fintech & Paiement">Fintech & Paiement</option>
-                <option value="Technologie & SaaS">Technologie & SaaS</option>
                 <option value="Santé & Bien-être">Santé & Bien-être</option>
-                <option value="Commerce & Distribution">Commerce & Distribution</option>
-                <option value="Autre Service">Autre Service</option>
+                <option value="Commerce & Boutique">Commerce & Boutique</option>
+                <option value="Services Professionnels">Services Professionnels</option>
               </select>
             </div>
 
-            <div className="sm:col-span-2">
+            <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Slogan / Phrase d&apos;accroche
+                Ville / Localisation
               </label>
               <input
                 type="text"
-                value={tagline}
-                onChange={(e) => setTagline(e.target.value)}
-                placeholder="Ex: La plateforme de mobilité préférée des Togolais"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Description de l&apos;entreprise
-              </label>
-              <textarea
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Présentez votre entreprise et votre mission à vos abonnés togolais..."
-                className="w-full p-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm leading-relaxed"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="Lomé, Togo"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               />
             </div>
           </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Présentation détaillée de l&apos;entreprise
+            </label>
+            <textarea
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Présentez brièvement vos activités, votre mission et ce que vous proposez à vos utilisateurs..."
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            />
+          </div>
         </div>
 
-        {/* Contact & Localisation */}
+        {/* Contact & Links */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
           <h3 className="text-base font-extrabold text-slate-950 pb-3 border-b border-slate-100">
-            Coordonnées & Siège Togo
+            Coordonnées Professionnelles
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Ville / Siège au Togo
-              </label>
-              <div className="relative">
-                <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="Lomé, Togo"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Numéro de téléphone / WhatsApp
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+228 90 00 00 00"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
-                />
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Email de contact
@@ -423,40 +442,58 @@ export default function DashboardSettingsPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="contact@entreprise.tg"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Site Web Officiel
+                Téléphone (T-Money / WhatsApp)
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+228 90 00 00 00"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Site Web / Réseau Social
               </label>
               <div className="relative">
                 <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="url"
+                  type="text"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://monentreprise.tg"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Submit Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
+        {/* Submit */}
+        <div className="flex justify-end">
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 pl-6 pr-3 py-3 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center justify-center gap-2 py-4 px-8 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-md disabled:opacity-50 transition-all cursor-pointer"
           >
-            <span>{saving ? "Enregistrement en cours..." : "Enregistrer les modifications"}</span>
-            <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            </span>
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            <span>{saving ? "Enregistrement..." : "Enregistrer les modifications"}</span>
           </button>
         </div>
       </form>

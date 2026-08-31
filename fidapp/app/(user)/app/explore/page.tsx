@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -22,97 +22,113 @@ export default function ExploreServicesPage() {
 
   const [services, setServices] = useState<
     (ServiceItem & { isSubscribed: boolean; bannerUrl?: string })[]
-  >([
-    {
-      id: "srv-1",
-      companyId: "comp-1",
-      companyName: "Gozem Togo",
-      name: "Course Moto & Taxi Lomé",
-      description:
-        "Plateforme de transport urbain sécurisé et rapide pour tous vos trajets dans le Grand Lomé.",
-      visibility: "PUBLIC",
-      category: "Transport & Mobilité",
-      createdAt: "2026-01-15",
-      isSubscribed: true,
-      bannerUrl: "/img-entrepreneur.jpg",
-      _count: {
-        subscriptions: 890,
-        feedbacks: 92,
-        updateAnnouncements: 7,
+  >([]);
+
+  useEffect(() => {
+    // Collect all custom services created by companies in localStorage
+    const customServices: any[] = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("fidback_services_")) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((s) => {
+                if (s.visibility === "PUBLIC") {
+                  customServices.push({
+                    ...s,
+                    isSubscribed: false,
+                    bannerUrl: s.logoUrl,
+                  });
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Explorer load custom services:", e);
+    }
+
+    const defaultServices = [
+      {
+        id: "srv-1",
+        companyId: "comp-1",
+        companyName: "Gozem Togo",
+        name: "Course Moto & Taxi Lomé",
+        description:
+          "Plateforme de transport urbain sécurisé et rapide pour tous vos trajets dans le Grand Lomé.",
+        visibility: "PUBLIC" as const,
+        category: "Transport & Mobilité",
+        createdAt: "2026-01-15",
+        isSubscribed: true,
+        bannerUrl: "/img-entrepreneur.jpg",
+        _count: {
+          subscriptions: 890,
+          feedbacks: 92,
+          updateAnnouncements: 7,
+        },
       },
-    },
-    {
-      id: "srv-2",
-      companyId: "comp-1",
-      companyName: "Gozem Togo",
-      name: "Livraison Gozem Food",
-      description:
-        "Commande et livraison express de vos plats favoris depuis les restaurants réputés de la capitale.",
-      visibility: "PUBLIC",
-      category: "Restauration",
-      createdAt: "2026-02-01",
-      isSubscribed: true,
-      bannerUrl: "/Chef.jpg",
-      _count: {
-        subscriptions: 530,
-        feedbacks: 56,
-        updateAnnouncements: 5,
+      {
+        id: "srv-2",
+        companyId: "comp-1",
+        companyName: "Gozem Togo",
+        name: "Livraison Gozem Food",
+        description:
+          "Commande et livraison express de vos plats favoris depuis les restaurants réputés de la capitale.",
+        visibility: "PUBLIC" as const,
+        category: "Restauration",
+        createdAt: "2026-02-01",
+        isSubscribed: true,
+        bannerUrl: "/Chef.jpg",
+        _count: {
+          subscriptions: 530,
+          feedbacks: 56,
+          updateAnnouncements: 5,
+        },
       },
-    },
-    {
-      id: "srv-4",
-      companyId: "comp-2",
-      companyName: "AfrikPay Togo",
-      name: "Paiement & Transfert Mobile",
-      description:
-        "Application fintech unifiée pour recharger vos comptes T-Money, Flooz et payer vos factures CEET / TdE.",
-      visibility: "PUBLIC",
-      category: "Fintech",
-      createdAt: "2026-01-20",
-      isSubscribed: true,
-      bannerUrl: "/img-entrepreneur.jpg",
-      _count: {
-        subscriptions: 1240,
-        feedbacks: 140,
-        updateAnnouncements: 9,
+      {
+        id: "srv-4",
+        companyId: "comp-2",
+        companyName: "AfrikPay Togo",
+        name: "Paiement & Transfert Mobile",
+        description:
+          "Application fintech unifiée pour recharger vos comptes T-Money, Flooz et payer vos factures CEET / TdE.",
+        visibility: "PUBLIC" as const,
+        category: "Fintech",
+        createdAt: "2026-01-20",
+        isSubscribed: true,
+        bannerUrl: "/img-entrepreneur.jpg",
+        _count: {
+          subscriptions: 1240,
+          feedbacks: 140,
+          updateAnnouncements: 9,
+        },
       },
-    },
-    {
-      id: "srv-5",
-      companyId: "comp-3",
-      companyName: "Le Palmier Gourmand",
-      name: "Expérience Restaurant & Menu du Jour",
-      description:
-        "Table gastronomique à Tokoin. Donnez votre retour sur l'accueil, les saveurs de nos plats togolais et le cadre.",
-      visibility: "PUBLIC",
-      category: "Restauration",
-      createdAt: "2026-02-10",
-      isSubscribed: false,
-      bannerUrl: "/Chef.jpg",
-      _count: {
-        subscriptions: 420,
-        feedbacks: 68,
-        updateAnnouncements: 4,
+      {
+        id: "srv-5",
+        companyId: "comp-3",
+        companyName: "Le Palmier Gourmand",
+        name: "Expérience Restaurant & Menu du Jour",
+        description:
+          "Table gastronomique à Tokoin. Donnez votre retour sur l'accueil, les saveurs de nos plats togolais et le cadre.",
+        visibility: "PUBLIC" as const,
+        category: "Restauration",
+        createdAt: "2026-02-10",
+        isSubscribed: false,
+        bannerUrl: "/Chef.jpg",
+        _count: {
+          subscriptions: 420,
+          feedbacks: 68,
+          updateAnnouncements: 4,
+        },
       },
-    },
-    {
-      id: "srv-6",
-      companyId: "comp-4",
-      companyName: "Clinique Santé Lomé",
-      name: "Prise de Rendez-vous Médical en Ligne",
-      description:
-        "Service numérique de consultation et réservation de créneaux avec nos médecins spécialistes.",
-      visibility: "PUBLIC",
-      category: "Santé",
-      createdAt: "2026-02-15",
-      isSubscribed: false,
-      _count: {
-        subscriptions: 290,
-        feedbacks: 34,
-        updateAnnouncements: 3,
-      },
-    },
-  ]);
+    ];
+
+    setServices([...customServices, ...defaultServices]);
+  }, []);
 
   const toggleSubscription = (serviceId: string) => {
     setServices(

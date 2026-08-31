@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
 
 /* ─── Simple client-side rate limiter ─────────────────────────────────────── */
@@ -77,16 +78,24 @@ function LoginForm() {
 
     /* Rate limiting */
     const rateLimitError = checkRateLimit();
-    if (rateLimitError) { setError(rateLimitError); return; }
+    if (rateLimitError) {
+      setError(rateLimitError);
+      toast.error(rateLimitError);
+      return;
+    }
 
     /* Validation */
     const cleanEmail = sanitize(email).toLowerCase();
     if (!isValidEmail(cleanEmail)) {
-      setError("Adresse email invalide.");
+      const err = "Adresse email invalide.";
+      setError(err);
+      toast.error(err);
       return;
     }
     if (password.length < 6) {
-      setError("Le mot de passe doit comporter au moins 6 caractères.");
+      const err = "Le mot de passe doit comporter au moins 6 caractères.";
+      setError(err);
+      toast.error(err);
       return;
     }
 
@@ -106,9 +115,9 @@ function LoginForm() {
           throw new Error("Email ou mot de passe incorrect. Vérifiez vos identifiants.");
         }
         if (authError.message.includes("Email not confirmed")) {
-          setInfo(
-            "Votre email n'est pas encore confirmé. Consultez votre boîte de réception et cliquez sur le lien de vérification."
-          );
+          const msg = "Votre email n'est pas encore confirmé. Consultez votre boîte de réception et cliquez sur le lien de vérification.";
+          setInfo(msg);
+          toast.error("Email non confirmé. Vérifiez votre boîte mail.", { icon: "✉️" });
           setLoading(false);
           return;
         }
@@ -121,6 +130,7 @@ function LoginForm() {
       if (data?.user) {
         resetAttempts();
         const userRole = data.user.user_metadata?.role || role;
+        toast.success(`Connexion réussie !`);
         if (userRole === "company") {
           router.push(redirectPath || "/dashboard");
         } else {
@@ -128,7 +138,9 @@ function LoginForm() {
         }
       }
     } catch (err: any) {
-      setError(err.message || "Impossible de se connecter. Vérifiez vos identifiants.");
+      const msg = err.message || "Impossible de se connecter. Vérifiez vos identifiants.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
