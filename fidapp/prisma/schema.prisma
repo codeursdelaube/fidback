@@ -25,6 +25,7 @@ model Company {
   subscriptionStatus String    @default("ACTIVE")
   createdAt          DateTime  @default(now())
   services           Service[]
+  dismissals         NotificationDismissal[]
 }
 
 model Service {
@@ -63,10 +64,22 @@ model Feedback {
 }
 
 model UpdateAnnouncement {
-  id        String   @id @default(cuid())
-  serviceId String
-  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  title     String
-  message   String
-  sentAt    DateTime @default(now())
+  id         String                  @id @default(cuid())
+  serviceId  String
+  service    Service                 @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title      String
+  message    String
+  sentAt     DateTime                @default(now())
+  dismissals NotificationDismissal[]
+}
+
+model NotificationDismissal {
+  id             String             @id @default(cuid())
+  companyId      String
+  company        Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  announcementId String
+  announcement   UpdateAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  dismissedAt    DateTime           @default(now())
+
+  @@unique([companyId, announcementId])
 }

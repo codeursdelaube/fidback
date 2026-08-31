@@ -1,18 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   BellRing,
   Send,
-  Layers,
   Calendar,
-  CheckCircle2,
-  Users,
   Sparkles,
-  ArrowRight,
   Plus,
   Loader2,
+  X,
+  CheckCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { UpdateAnnouncementItem, ServiceItem } from "@/lib/types";
@@ -21,164 +19,178 @@ import { pushNotification } from "@/lib/notifications";
 
 export default function DashboardUpdatesPage() {
   const supabase = createClient();
-  const [companyId, setCompanyId] = useState<string>("default");
+  const [companyId, setCompanyId] = useState<string>("");
   const [companyName, setCompanyName] = useState<string>("Mon Entreprise");
   const [services, setServices] = useState<ServiceItem[]>([]);
-  const [announcements, setAnnouncements] = useState<UpdateAnnouncementItem[]>([]);
+  const [announcements, setAnnouncements] = useState<(UpdateAnnouncementItem & { companyName?: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dismissingId, setDismissingId] = useState<string | null>(null);
 
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+  // ── Load data from real APIs ──────────────────────────────────────────────
+  const loadData = useCallback(async (cid?: string) => {
+    const resolvedCid = cid || companyId;
+    if (!resolvedCid) return;
 
-        const cid = user?.id || "guest-company";
-        const cname = user?.user_metadata?.companyName || user?.user_metadata?.name || "Mon Entreprise";
-        setCompanyId(cid);
-        setCompanyName(cname);
-
-        // Load services
-        const servicesKey = `fidback_services_${cid}`;
-        const savedServices = localStorage.getItem(servicesKey);
-        if (savedServices) {
-          try {
-            const parsedServices: ServiceItem[] = JSON.parse(savedServices);
-            setServices(parsedServices);
-            if (parsedServices.length > 0) {
-              setSelectedServiceId(parsedServices[0].id);
-            }
-          } catch (e) {
-            setServices([]);
-          }
-        } else {
-          setServices([]);
-        }
-
-        // Load announcements
-        const updatesKey = `fidback_updates_${cid}`;
-        const savedUpdates = localStorage.getItem(updatesKey);
-        let localAnnouncements: (UpdateAnnouncementItem & { companyName?: string })[] = [];
-        if (savedUpdates) {
-          try {
-            localAnnouncements = JSON.parse(savedUpdates);
-          } catch (e) {
-            localAnnouncements = [];
+    try {
+      // 1. Load services from API
+      const srvRes = await fetch(`/api/services?companyId=${resolvedCid}`);
+      if (srvRes.ok) {
+        const srvData = await srvRes.json();
+        if (Array.isArray(srvData.services)) {
+          setServices(srvData.services);
+          if (srvData.services.length > 0) {
+            setSelectedServiceId((prev) => prev || srvData.services[0].id);
           }
         }
-
-        // Try to fetch from server API
-        try {
-          const res = await fetch("/api/updates");
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data.updates)) {
-              // Merge local and server
-              const combined = [...localAnnouncements];
-              data.updates.forEach((u: any) => {
-                if (!combined.some((c) => c.id === u.id)) {
-                  combined.push(u);
-                }
-              });
-              setAnnouncements(combined);
-              localStorage.setItem(updatesKey, JSON.stringify(combined));
-
-              // Push any local announcements not yet on server
-              localAnnouncements.forEach((loc) => {
-                if (!data.updates.some((srv: any) => srv.id === loc.id)) {
-                  fetch("/api/updates", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ...loc, companyName: cname }),
-                  }).catch(() => {});
-                }
-              });
-              return;
-            }
-          }
-        } catch (_) {}
-
-        // Fallback to local
-        setAnnouncements(localAnnouncements);
-        if (localAnnouncements.length > 0) {
-          localAnnouncements.forEach((loc) => {
-            fetch("/api/updates", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...loc, companyName: cname }),
-            }).catch(() => {});
-          });
-        }
-      } catch (err) {
-        console.warn("Erreur chargement updates:", err);
-      } finally {
-        setLoading(false);
+      } else {
+        const errData = await srvRes.json().catch(() => ({}));
+        console.error("Erreur /api/services:", errData?.error || srvRes.status);
       }
-    }
 
-    loadData();
+      // 2. Load announcements from API — exclude already dismissed ones
+      const updRes = await fetch(
+        `/api/updates?companyId=${resolvedCid}&excludeDismissedFor=${resolvedCid}`
+      );
+      if (updRes.ok) {
+        const updData = await updRes.json();
+        if (Array.isArray(updData.updates)) {
+          setAnnouncements(updData.updates);
+        }
+      } else {
+        const errData = await updRes.json().catch(() => ({}));
+        console.error("Erreur /api/updates:", errData?.error || updRes.status);
+      }
+    } catch (err) {
+      console.error("Erreur chargement updates:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    async function init() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const cid = user?.id || "";
+      const cname =
+        user?.user_metadata?.companyName ||
+        user?.user_metadata?.name ||
+        "Mon Entreprise";
+      setCompanyId(cid);
+      setCompanyName(cname);
+      await loadData(cid);
+    }
+    init();
   }, [supabase]);
 
-  const saveAnnouncements = (newUpdates: UpdateAnnouncementItem[]) => {
-    setAnnouncements(newUpdates);
-    if (companyId) {
-      localStorage.setItem(`fidback_updates_${companyId}`, JSON.stringify(newUpdates));
-      window.dispatchEvent(new Event("fidback_updates_updated"));
-    }
-  };
+  // ── Realtime listener — refresh list on new INSERT ──────────────────────
+  useEffect(() => {
+    if (!companyId) return;
 
+    const channel = supabase
+      .channel("dashboard-updates-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "UpdateAnnouncement" },
+        () => loadData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companyId, supabase, loadData]);
+
+  // ── Publish announcement ─────────────────────────────────────────────────
   const handlePublishUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !message.trim()) {
       toast.error("Veuillez renseigner un titre et un message.");
       return;
     }
-
-    const currentService = services.find((s) => s.id === selectedServiceId);
-    const serviceName = currentService ? currentService.name : "Service Principal";
-
-    const newAnnouncement: UpdateAnnouncementItem & { companyName?: string } = {
-      id: `upd-${Date.now()}`,
-      serviceId: selectedServiceId || "default-srv",
-      serviceName,
-      companyName,
-      title: title.trim(),
-      message: message.trim(),
-      sentAt: "À l'instant",
-    };
-
-    // 1. Post to backend API so all clients/devices receive it
-    try {
-      await fetch("/api/updates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newAnnouncement),
-      });
-    } catch (apiErr) {
-      console.warn("API publish update error:", apiErr);
+    if (!selectedServiceId) {
+      toast.error("Veuillez sélectionner un service.");
+      return;
     }
 
-    const updated = [newAnnouncement, ...announcements];
-    saveAnnouncements(updated);
+    const currentService = services.find((s) => s.id === selectedServiceId);
+    const serviceName = currentService?.name || "Service Principal";
+
+    const res = await fetch("/api/updates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        serviceId: selectedServiceId,
+        title: title.trim(),
+        message: message.trim(),
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      toast.error(errData?.error || "Erreur lors de la publication.");
+      console.error("POST /api/updates error:", errData);
+      return;
+    }
 
     setTitle("");
     setMessage("");
-    toast.success(`Annonce diffusée en direct aux abonnés de « ${serviceName} » !`, {
+    toast.success(`Annonce diffusée aux abonnés de « ${serviceName} » !`, {
       icon: "📢",
     });
 
-    // Fire browser push notification for the creator
     pushNotification({
       type: "update",
       title: `📢 MAJ diffusée — ${serviceName}`,
       body: title.trim(),
       href: `/dashboard/updates`,
     });
+
+    // Reload list immediately (Realtime will also fire)
+    await loadData();
+  };
+
+  // ── Dismiss announcement (persistent in DB with optimistic UI & rollback) ──
+  const handleDismiss = async (announcementId: string) => {
+    if (!companyId) return;
+    setDismissingId(announcementId);
+
+    // Save previous state for rollback in case of error
+    const previousAnnouncements = [...announcements];
+    // Optimistic UI update: remove immediately from list
+    setAnnouncements((prev) => prev.filter((a) => a.id !== announcementId));
+
+    try {
+      const res = await fetch("/api/updates/dismiss", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId, announcementId }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        // Rollback state if server returns error
+        setAnnouncements(previousAnnouncements);
+        toast.error(errData?.error || "Impossible d'effacer cette notification.");
+        console.error("POST /api/updates/dismiss error:", errData);
+        return;
+      }
+
+      toast.success("Notification effacée.", { icon: "✓", duration: 2000 });
+    } catch (err) {
+      // Rollback state on network exception
+      setAnnouncements(previousAnnouncements);
+      console.error("Erreur dismiss:", err);
+      toast.error("Erreur réseau lors de la suppression.");
+    } finally {
+      setDismissingId(null);
+    }
   };
 
   return (
@@ -190,7 +202,7 @@ export default function DashboardUpdatesPage() {
           <span>Communication Abonnés</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
-          Annonces & Mises à Jour Produit
+          Annonces &amp; Mises à Jour Produit
         </h2>
         <p className="text-xs sm:text-sm text-slate-600">
           Bouclez la boucle du feedback : informez vos abonnés des résolutions et améliorations apportées suite à leurs retours.
@@ -214,7 +226,12 @@ export default function DashboardUpdatesPage() {
             </div>
           </div>
 
-          {services.length === 0 ? (
+          {loading ? (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-emerald-600" />
+              Chargement des services...
+            </div>
+          ) : services.length === 0 ? (
             <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-3">
               <p className="font-semibold">
                 Vous n&apos;avez pas encore publié de fiche service pour <strong>{companyName}</strong>.
@@ -287,9 +304,16 @@ export default function DashboardUpdatesPage() {
 
         {/* History of published announcements */}
         <div className="lg:col-span-6 space-y-4">
-          <h3 className="text-base font-extrabold text-slate-950 pb-2 border-b border-slate-200/80">
-            Historique des annonces diffusées ({announcements.length})
-          </h3>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
+            <h3 className="text-base font-extrabold text-slate-950">
+              Historique des annonces ({announcements.length})
+            </h3>
+            {announcements.length > 0 && (
+              <span className="text-[10px] text-slate-400 font-medium">
+                Cliquez sur ✕ pour effacer définitivement une entrée
+              </span>
+            )}
+          </div>
 
           {loading ? (
             <div className="py-12 text-center text-slate-400 text-xs">
@@ -314,7 +338,31 @@ export default function DashboardUpdatesPage() {
                     <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                       {ann.serviceName}
                     </span>
-                    <span className="text-[10px] text-slate-400">{ann.sentAt}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400">
+                        {ann.sentAt && ann.sentAt !== "À l'instant"
+                          ? new Date(ann.sentAt).toLocaleDateString("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ann.sentAt}
+                      </span>
+                      <button
+                        type="button"
+                        title="Effacer cette notification du tableau de bord"
+                        onClick={() => handleDismiss(ann.id)}
+                        disabled={dismissingId === ann.id}
+                        className="w-6 h-6 rounded-full bg-slate-100 hover:bg-red-100 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors disabled:opacity-50"
+                      >
+                        {dismissingId === ann.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <X className="w-3 h-3" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <h4 className="text-base font-bold text-slate-950">
@@ -324,6 +372,11 @@ export default function DashboardUpdatesPage() {
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100">
                     {ann.message}
                   </p>
+
+                  <div className="flex items-center gap-1 text-[10px] text-emerald-700">
+                    <CheckCheck className="w-3 h-3" />
+                    <span>Diffusée aux abonnés</span>
+                  </div>
                 </div>
               ))}
             </div>

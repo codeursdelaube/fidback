@@ -182,18 +182,38 @@ export default function DashboardServicesPage() {
       },
     };
 
+    let finalService = { ...newService };
+
     // Sync to backend API so all clients/devices see it
     try {
-      await fetch("/api/services", {
+      const res = await fetch("/api/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newService),
+        body: JSON.stringify({
+          companyId,
+          companyName,
+          name: newName.trim(),
+          description: newDescription.trim(),
+          visibility: newVisibility,
+          logoUrl: finalImageUrl,
+        }),
       });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.service) {
+          finalService = {
+            ...finalService,
+            id: data.service.id,
+            logoUrl: data.service.logoUrl || finalImageUrl,
+          };
+        }
+      }
     } catch (apiErr) {
       console.warn("API sync error:", apiErr);
     }
 
-    const updated = [newService, ...services];
+    const updated = [finalService, ...services];
     saveServices(updated);
 
     setIsModalOpen(false);
@@ -201,7 +221,7 @@ export default function DashboardServicesPage() {
     setNewDescription("");
     setImageFile(null);
     setImagePreview(null);
-    toast.success(`Fiche service « ${newService.name} » publiée avec succès !`, {
+    toast.success(`Fiche service « ${finalService.name} » publiée avec succès !`, {
       icon: "✨",
     });
   };

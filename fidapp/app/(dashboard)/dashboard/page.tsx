@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ServiceItem, UpdateAnnouncementItem, FeedbackItem } from "@/lib/types";
+import AnalyticsCharts from "@/components/dashboard/AnalyticsCharts";
 
 export default function DashboardOverviewPage() {
   const supabase = createClient();
@@ -296,6 +297,13 @@ export default function DashboardOverviewPage() {
           </div>
         </div>
       )}
+
+      {/* Recharts Analytics Section */}
+      <AnalyticsCharts
+        feedbacks={recentFeedbacks}
+        services={servicesList}
+        subscribersCount={subscribersCount}
+      />
 
       {/* Two Column Grid: Feedbacks & Services summary */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

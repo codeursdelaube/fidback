@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
     const serviceId = searchParams.get("serviceId");
     const companyId = searchParams.get("companyId");
     const userId = searchParams.get("userId");
+    // When fetching for the dashboard, exclude announcements dismissed by this company
+    const excludeDismissedFor = searchParams.get("excludeDismissedFor"); // companyId
 
     const whereClause: any = {};
     if (serviceId) {
@@ -19,6 +21,13 @@ export async function GET(request: NextRequest) {
         subscriptions: {
           some: { userId },
         },
+      };
+    }
+
+    // Exclude dismissed announcements for this company
+    if (excludeDismissedFor) {
+      whereClause.dismissals = {
+        none: { companyId: excludeDismissedFor },
       };
     }
 
@@ -48,6 +57,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message || "Erreur de chargement des annonces." }, { status: 500 });
   }
 }
+
 
 
 export async function POST(request: NextRequest) {

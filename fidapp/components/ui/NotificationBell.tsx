@@ -9,6 +9,7 @@ import {
   markAllRead,
   markOneRead,
   clearNotifications,
+  deleteOneNotification,
   requestNotificationPermission,
   pushNotification,
   timeAgo,
@@ -33,38 +34,9 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
     setUnread(getUnreadCount());
   };
 
-  const syncServerUpdates = async () => {
-    try {
-      const res = await fetch("/api/updates");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.updates)) {
-          const stored = getStoredNotifications();
-          const notifiedSet = new Set(
-            stored.map((n) => n.title + "_" + n.body)
-          );
-
-          data.updates.forEach((upd: any) => {
-            const title = `📢 ${upd.serviceName || "Mise à jour"} : ${upd.title}`;
-            const key = title + "_" + upd.message;
-            if (!notifiedSet.has(key)) {
-              pushNotification({
-                type: "update",
-                title,
-                body: upd.message,
-                href: `/app/service/${upd.serviceId}`,
-              });
-            }
-          });
-        }
-      }
-    } catch (_) {}
-  };
-
   useEffect(() => {
     const supabase = createClient();
     refresh();
-    syncServerUpdates();
 
     // Supabase Realtime channel for live announcements and feedbacks
     const channel = supabase
@@ -73,22 +45,32 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "UpdateAnnouncement" },
         (payload: any) => {
-          console.log("Realtime bell notification received:", payload.new);
           const upd: any = payload.new;
-          pushNotification({
-            type: "update",
-            title: `📢 Mise à jour : ${upd.title}`,
-            body: upd.message,
-            href: `/app/service/${upd.serviceId}`,
-          });
-          refresh();
+          if (upd) {
+            pushNotification({
+              type: "update",
+              title: `📢 Mise à jour : ${upd.title}`,
+              body: upd.message,
+              href: `/app/service/${upd.serviceId}`,
+            });
+            refresh();
+          }
         }
       )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "Feedback" },
-        () => {
-          refresh();
+        (payload: any) => {
+          const fb: any = payload.new;
+          if (fb) {
+            pushNotification({
+              type: "feedback",
+              title: "💬 Nouveau feedback reçu",
+              body: fb.content ? fb.content.slice(0, 80) : "Nouveau retour utilisateur",
+              href: "/dashboard/feedbacks",
+            });
+            refresh();
+          }
         }
       )
       .subscribe();
@@ -98,20 +80,13 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
 
     window.addEventListener("fidback_notification", onNotif);
     window.addEventListener("fidback_notifications_read", onRead);
-    window.addEventListener("fidback_updates_updated", syncServerUpdates);
-
-    // Poll every 5s for fallback sync
-    const interval = setInterval(() => {
-      refresh();
-      syncServerUpdates();
-    }, 5000);
+    window.addEventListener("storage", onNotif);
 
     return () => {
       supabase.removeChannel(channel);
       window.removeEventListener("fidback_notification", onNotif);
       window.removeEventListener("fidback_notifications_read", onRead);
-      window.removeEventListener("fidback_updates_updated", syncServerUpdates);
-      clearInterval(interval);
+      window.removeEventListener("storage", onNotif);
     };
   }, []);
 
@@ -139,6 +114,18 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
     }
   };
 
+  const handleDeleteOne = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteOneNotification(id);
+    refresh();
+  };
+
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clearNotifications();
+    refresh();
+  };
+
   const typeIcon = (type: FidbackNotification["type"]) => {
     switch (type) {
       case "feedback": return "💬";
@@ -150,8 +137,8 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
 
   const bellClass =
     variant === "dark"
-      ? "p-2 rounded-full text-slate-400 hover:text-emerald-400 hover:bg-slate-900 transition-colors relative"
-      : "p-2 rounded-full text-slate-500 hover:text-slate-950 hover:bg-slate-100 transition-colors relative";
+      ? "p-2 rounded-full text-slate-400 hover:text-emerald-400 hover:bg-slate-900 transition-colors relative cursor-pointer"
+      : "p-2 rounded-full text-slate-500 hover:text-slate-950 hover:bg-slate-100 transition-colors relative cursor-pointer";
 
   return (
     <div className="relative" ref={panelRef}>
@@ -187,30 +174,33 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
             }`}
           >
             <span className={`text-xs font-extrabold ${variant === "dark" ? "text-white" : "text-slate-950"}`}>
-              Notifications
+              Notifications ({notifications.length})
             </span>
             <div className="flex items-center gap-1">
               {notifications.length > 0 && (
                 <>
                   <button
+                    type="button"
                     onClick={() => { markAllRead(); refresh(); }}
                     title="Tout marquer comme lu"
-                    className="p-1.5 rounded-full hover:bg-emerald-50 text-emerald-600 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-emerald-50 text-emerald-600 transition-colors cursor-pointer"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => { clearNotifications(); refresh(); }}
-                    title="Tout effacer"
-                    className="p-1.5 rounded-full hover:bg-rose-50 text-rose-500 transition-colors"
+                    type="button"
+                    onClick={handleClearAll}
+                    title="Tout effacer définitivement"
+                    className="p-1.5 rounded-full hover:bg-rose-50 text-rose-500 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </>
               )}
               <button
+                type="button"
                 onClick={() => setOpen(false)}
-                className={`p-1.5 rounded-full transition-colors ${
+                className={`p-1.5 rounded-full transition-colors cursor-pointer ${
                   variant === "dark" ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-400"
                 }`}
               >
@@ -233,14 +223,14 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
                 <div
                   key={notif.id}
                   onClick={() => markOneRead(notif.id)}
-                  className={`flex items-start gap-3 px-4 py-3.5 border-b last:border-b-0 cursor-pointer transition-colors ${
+                  className={`group/item relative flex items-start gap-3 px-4 py-3.5 border-b last:border-b-0 cursor-pointer transition-colors ${
                     variant === "dark"
                       ? `border-slate-800 ${!notif.read ? "bg-emerald-950/20" : "hover:bg-slate-800/50"}`
                       : `border-slate-50 ${!notif.read ? "bg-emerald-50/60" : "hover:bg-slate-50"}`
                   }`}
                 >
                   <span className="text-lg shrink-0 mt-0.5">{typeIcon(notif.type)}</span>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-6">
                     <div className="flex items-start justify-between gap-2">
                       <p className={`text-[11px] font-bold leading-tight ${variant === "dark" ? "text-white" : "text-slate-950"}`}>
                         {notif.title}
@@ -267,6 +257,16 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
                       )}
                     </div>
                   </div>
+
+                  {/* Individual Delete Button */}
+                  <button
+                    type="button"
+                    title="Supprimer cette notification"
+                    onClick={(e) => handleDeleteOne(e, notif.id)}
+                    className="absolute top-3 right-3 p-1 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50/80 transition-colors opacity-0 group-hover/item:opacity-100 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               ))
             )}

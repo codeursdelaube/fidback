@@ -1,7 +1,6 @@
 /**
  * Fidback — Notification Utility
- * Uses the browser's Web Notifications API (no server push needed for now).
- * Call `requestPermission()` once on user action, then `sendNotification()` freely.
+ * Uses the browser's Web Notifications API + persistent dismissal memory.
  */
 
 export type FidbackNotification = {
@@ -17,6 +16,26 @@ export type FidbackNotification = {
 };
 
 const STORAGE_KEY = "fidback_notifications";
+const DISMISSED_KEYS_KEY = "fidback_dismissed_notif_signatures";
+
+/** Get set of permanently dismissed notification signatures */
+export function getDismissedSignatures(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEYS_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+/** Mark a signature as permanently dismissed */
+export function markSignatureDismissed(signature: string) {
+  if (typeof window === "undefined") return;
+  const set = getDismissedSignatures();
+  set.add(signature);
+  localStorage.setItem(DISMISSED_KEYS_KEY, JSON.stringify(Array.from(set).slice(-300)));
+}
 
 /** Request browser notification permission */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
@@ -56,7 +75,19 @@ export function sendBrowserNotification(
 export function pushNotification(notif: Omit<FidbackNotification, "id" | "createdAt" | "read">) {
   if (typeof window === "undefined") return;
 
+  const signature = `${notif.title}_${notif.body}`.trim();
+  const dismissed = getDismissedSignatures();
+  // If this notification was cleared/dismissed by the user, ignore it
+  if (dismissed.has(signature)) {
+    return;
+  }
+
   const stored = getStoredNotifications();
+  // Check if identical active notification is already in the list
+  if (stored.some((n) => `${n.title}_${n.body}`.trim() === signature)) {
+    return;
+  }
+
   const newNotif: FidbackNotification = {
     ...notif,
     id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -112,9 +143,27 @@ export function markOneRead(id: string) {
   window.dispatchEvent(new Event("fidback_notifications_read"));
 }
 
-/** Clear all notifications */
+/** Delete a single notification permanently */
+export function deleteOneNotification(id: string) {
+  if (typeof window === "undefined") return;
+  const stored = getStoredNotifications();
+  const target = stored.find((n) => n.id === id);
+  if (target) {
+    markSignatureDismissed(`${target.title}_${target.body}`.trim());
+  }
+  const updated = stored.filter((n) => n.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  window.dispatchEvent(new Event("fidback_notifications_read"));
+}
+
+/** Clear all notifications permanently */
 export function clearNotifications() {
   if (typeof window === "undefined") return;
+  const stored = getStoredNotifications();
+  // Mark all current notifications as dismissed so sync won't recreate them
+  stored.forEach((n) => {
+    markSignatureDismissed(`${n.title}_${n.body}`.trim());
+  });
   localStorage.removeItem(STORAGE_KEY);
   window.dispatchEvent(new Event("fidback_notifications_read"));
 }
