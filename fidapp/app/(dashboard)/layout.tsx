@@ -15,6 +15,7 @@ import {
   Compass,
   SlidersHorizontal,
   Building2,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -27,7 +28,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const supabase = createClient();
 
-  const [companyName, setCompanyName] = useState("Gozem Togo");
+  const [companyName, setCompanyName] = useState("Mon Entreprise");
   const [companyCity, setCompanyCity] = useState("Lomé, Togo");
   const [logoUrl, setLogoUrl] = useState("/img-entrepreneur.jpg");
 
@@ -75,42 +76,46 @@ export default function DashboardLayout({
   const navigation = [
     { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
     { name: "Mes Services", href: "/dashboard/services", icon: Layers },
-    { name: "Feedbacks Reçus", href: "/dashboard/feedbacks", icon: MessageSquareText },
+    { name: "Feedbacks & Modération IA", href: "/dashboard/feedbacks", icon: MessageSquareText },
     { name: "Annonces & MAJ", href: "/dashboard/updates", icon: BellRing },
     { name: "Personnalisation Profil", href: "/dashboard/settings", icon: SlidersHorizontal },
     { name: "Abonnement & Facturation", href: "/dashboard/billing", icon: CreditCard },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100/70 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F8FAF9] flex flex-col md:flex-row font-sans">
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800">
+      <aside className="w-full md:w-64 bg-slate-950 text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-900">
         <div>
           {/* Brand header */}
-          <div className="p-6 border-b border-slate-800">
+          <div className="p-5 border-b border-slate-900">
             <Link href="/" className="flex items-center gap-3">
-              <div className="relative w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20">
+              <div className="relative w-8 h-8 rounded-xl overflow-hidden border border-emerald-500/40 bg-emerald-950 flex items-center justify-center shadow-xs">
                 <Image
                   src="/logo.png"
                   alt="Fidback Logo"
                   fill
+                  sizes="32px"
                   className="object-cover"
                 />
               </div>
               <div>
-                <span className="font-extrabold text-lg text-white tracking-tight">
+                <span className="font-black text-lg text-white tracking-tight flex items-center gap-1.5">
                   Fidback
+                  <span className="text-[9px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800 px-1.5 py-0.5 rounded">
+                    TG 🇹🇬
+                  </span>
                 </span>
-                <span className="block text-[10px] text-indigo-400 font-semibold uppercase tracking-wider">
-                  Dashboard Entreprise
+                <span className="block text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+                  Espace Entreprise
                 </span>
               </div>
             </Link>
 
-            {/* Current Company badge (Dynamic) */}
-            <div className="mt-4 p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-between">
+            {/* Current Company badge */}
+            <div className="mt-4 p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 border border-slate-600 bg-slate-700">
+                <div className="relative w-8 h-8 rounded-xl overflow-hidden shrink-0 border border-slate-700 bg-slate-800">
                   <Image
                     src={logoUrl}
                     alt={companyName}
@@ -123,14 +128,14 @@ export default function DashboardLayout({
                   <div className="text-[10px] text-slate-400 truncate">{companyCity}</div>
                 </div>
               </div>
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-950 text-emerald-300 border border-emerald-700">
                 ACTIVE
               </span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-4 space-y-1.5">
+          <nav className="p-3.5 space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -141,10 +146,10 @@ export default function DashboardLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold transition-all ${
                     isActive
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/70"
+                      ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20"
+                      : "text-slate-400 hover:text-white hover:bg-slate-900"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -156,14 +161,14 @@ export default function DashboardLayout({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800 space-y-2">
+        <div className="p-4 border-t border-slate-900 space-y-2">
           <Link
             href="/app"
             target="_blank"
-            className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/70 transition-all"
+            className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-all"
           >
             <span className="flex items-center gap-2">
-              <Compass className="w-3.5 h-3.5 text-indigo-400" />
+              <Compass className="w-3.5 h-3.5 text-emerald-400" />
               <span>Voir l&apos;espace public</span>
             </span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
@@ -182,28 +187,28 @@ export default function DashboardLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="h-16 bg-white/90 border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md">
+        <header className="h-16 bg-white/95 border-b border-slate-200/90 px-6 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <h1 className="text-base font-bold text-slate-900">
-              Espace Entreprise
+            <h1 className="text-sm sm:text-base font-extrabold text-slate-950">
+              Tableau de Bord Entreprise
             </h1>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Abonnement Fidback Actif
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+              Arbitrage IA Connecté
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard/settings"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-all"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-full transition-all"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden sm:inline">Personnaliser le profil</span>
+              <span className="hidden sm:inline">Paramètres</span>
             </Link>
             <Link
               href="/dashboard/updates"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-950 bg-emerald-400 hover:bg-emerald-300 px-4 py-2 rounded-full shadow-xs transition-all"
             >
               <BellRing className="w-3.5 h-3.5" />
               <span>Publier une MAJ</span>

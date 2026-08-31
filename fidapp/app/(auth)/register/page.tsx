@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import OtpVerify from "@/components/auth/OtpVerify";
 import { createClient } from "@/lib/supabase/client";
@@ -156,16 +157,15 @@ export default function RegisterUserPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#F8FAF9] relative overflow-hidden font-sans">
         <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
           {/* Logo */}
           <div className="text-center mb-6">
             <Link href="/" className="inline-flex items-center gap-2.5 group">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20">
+              <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-emerald-500/40 bg-emerald-950 flex items-center justify-center shadow-xs">
                 <Image src="/logo.png" alt="Fidback Logo" fill className="object-cover" priority />
               </div>
-              <span className="font-extrabold text-2xl tracking-tight text-slate-900">Fidback</span>
+              <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
             </Link>
           </div>
           <OtpVerify
@@ -180,41 +180,39 @@ export default function RegisterUserPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#F8FAF9] relative overflow-hidden font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Back button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 mb-6 transition-colors group"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-950 mb-6 transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft className="w-4 h-4 text-emerald-600 group-hover:-translate-x-0.5 transition-transform" />
           <span>Retour à l&apos;accueil</span>
         </Link>
 
         {/* Logo */}
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2.5 group mb-5">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-emerald-500/40 bg-emerald-950 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
               <Image src="/logo.png" alt="Fidback Logo" fill className="object-cover" priority />
             </div>
-            <span className="font-extrabold text-2xl tracking-tight text-slate-900">Fidback</span>
+            <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
             Rejoignez la communauté
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-xs sm:text-sm text-slate-600">
             Donnez des feedbacks qualitatifs aux entreprises togolaises
           </p>
         </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="glass-card rounded-3xl p-8 shadow-xl">
+        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">
           {error && (
-            <div className="mb-5 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-700 text-xs sm:text-sm">
-              <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-xs sm:text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
@@ -236,7 +234,7 @@ export default function RegisterUserPage() {
                   onChange={(e) => setPseudo(e.target.value)}
                   placeholder="kodjo_dev"
                   maxLength={30}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
                 />
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
@@ -259,7 +257,7 @@ export default function RegisterUserPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="votre.email@domaine.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
                 />
               </div>
             </div>
@@ -279,7 +277,7 @@ export default function RegisterUserPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+                  className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
                 />
                 <button
                   type="button"
@@ -321,10 +319,10 @@ export default function RegisterUserPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-sm transition-all ${
+                  className={`w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm transition-all ${
                     confirmPassword.length > 0 && confirmPassword !== password
                       ? "border-rose-400 focus:border-rose-500"
-                      : "border-slate-200 focus:border-indigo-500"
+                      : "border-slate-200 focus:border-emerald-500"
                   }`}
                 />
                 <button
@@ -342,9 +340,9 @@ export default function RegisterUserPage() {
 
             {/* Benefits chips */}
             <div className="grid grid-cols-2 gap-2 pt-1">
-              {["Gratuit & sans pub", "Accès direct aux fondateurs", "Feedbacks impactants", "Communauté Togo"].map((b) => (
-                <div key={b} className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              {["Gratuit & sans pub", "Accès direct aux fondateurs", "Arbitrage IA bienveillant", "Communauté Togo 🇹🇬"].map((b) => (
+                <div key={b} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>{b}</span>
                 </div>
               ))}
@@ -353,29 +351,25 @@ export default function RegisterUserPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 transition-all duration-200"
+              className="w-full mt-3 inline-flex items-center justify-center gap-2 pl-6 pr-3 py-3.5 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <span>Créer mon compte gratuitement</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+              <span>{loading ? "Création du compte..." : "Créer mon compte gratuitement"}</span>
+              <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+              </span>
             </button>
           </form>
 
           <div className="mt-7 pt-5 border-t border-slate-100 text-center text-xs text-slate-600 space-y-2">
             <p>
               Déjà inscrit ?{" "}
-              <Link href="/login?role=user" className="font-bold text-indigo-600 hover:text-indigo-700 underline">
+              <Link href="/login?role=user" className="font-bold text-emerald-800 hover:text-emerald-950 underline">
                 Se connecter
               </Link>
             </p>
             <p className="text-slate-400">
               Vous êtes une entreprise ?{" "}
-              <Link href="/register-company" className="font-semibold text-purple-600 hover:text-purple-700 underline">
+              <Link href="/register-company" className="font-bold text-slate-700 hover:text-slate-950 underline">
                 Inscrire une entreprise
               </Link>
             </p>
@@ -383,7 +377,7 @@ export default function RegisterUserPage() {
         </div>
 
         <p className="mt-4 text-center text-[11px] text-slate-400 flex items-center justify-center gap-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>Inscription sécurisée · Données protégées et confidentielles</span>
         </p>
       </div>

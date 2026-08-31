@@ -10,166 +10,201 @@ import {
   BellRing,
   Building2,
   TrendingUp,
+  ShoppingCart,
+  Rocket,
+  Store,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 
 export function HowItWorks() {
+  const valuePillars = [
+    {
+      category: "Écoute Directe & Authentique",
+      metric: "100% Qualitatif",
+      desc: "Des retours textuels détaillés pour comprendre les vrais besoins de vos clients.",
+      icon: ShoppingCart,
+    },
+    {
+      category: "Modération Assistée par IA",
+      metric: "Zéro Spam",
+      desc: "Filtrage intelligent pour préserver un climat respectueux et constructif.",
+      icon: Rocket,
+    },
+    {
+      category: "Fidélisation & Annonces",
+      metric: "Mises à Jour",
+      desc: "Informez directement vos abonnés dès qu'une suggestion est déployée.",
+      icon: Store,
+    },
+  ];
+
   return (
-    <section id="comment-ca-marche" className="py-20 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="comment-ca-marche" className="py-20 relative overflow-hidden bg-slate-50/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
         
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-3 mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/60 text-xs font-bold text-indigo-700">
-            <span>Écosystème Entreprise Togo 🇹🇬</span>
+        {/* Section 1: How It Works Steps */}
+        <div>
+          <div className="text-center max-w-3xl mx-auto space-y-3 mb-14">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Fonctionnement Simple</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
+              Comment fonctionne <span className="gradient-text">Fidback</span> ?
+            </h2>
+            <p className="text-sm sm:text-base text-slate-600">
+              Une boucle transparente reliant les clients aux entreprises togolaises.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-            Comment fonctionne <span className="gradient-text">Fidback</span> ?
-          </h2>
-          <p className="text-base text-slate-600">
-            Une architecture conçue pour connecter directement les créateurs de services aux retours textuels de leurs utilisateurs.
-          </p>
-        </div>
 
-        {/* Bento Grid layout matching the middle section of the reference image */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch relative">
-          
-          {/* Card 1 (Left - Dark UI widget) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="lg:col-span-4 rounded-3xl bg-slate-950 text-white p-7 flex flex-col justify-between relative shadow-xl border border-slate-800"
-          >
-            <div className="space-y-4">
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
-                01
-              </div>
-              <h3 className="text-2xl font-bold tracking-tight text-white leading-snug">
-                S&apos;abonner aux services favoris
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                Les utilisateurs togolais découvrent les fiches d&apos;applications, de restaurants et d&apos;entreprises, et s&apos;y abonnent pour suivre leur évolution.
-              </p>
-            </div>
-
-            <div className="pt-8">
-              <Link
-                href="/app/explore"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md"
-              >
-                <span>Explorer le catalogue</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Floating chrome droplet overlapping card 1 & 2 */}
-          <motion.div
-            animate={{ y: [-6, 6, -6], rotate: [0, 10, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="hidden lg:block absolute left-[31%] top-1/2 z-30 w-12 h-12 rounded-full chrome-droplet pointer-events-none"
-          />
-
-          {/* Card 2 (Middle - Portrait card with clean organic entrepreneur photo) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="lg:col-span-4 glass-panel rounded-3xl p-6 flex flex-col justify-between relative shadow-lg"
-          >
-            <div className="space-y-4">
-              {/* Organic Portrait Image - Free and integrated */}
-              <div className="relative w-full h-52 rounded-2xl overflow-hidden bg-slate-100">
-                <Image
-                  src="/img-entrepreneur.jpg"
-                  alt="Fondateur de startup togolaise"
-                  fill
-                  className="object-cover object-top hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-
-              <div>
-                <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded">
-                  Étape 02
-                </span>
-                <h3 className="text-xl font-extrabold text-slate-900 mt-2">
-                  Feedback 100% Qualitatif
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            
+            {/* Step 01 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="rounded-3xl bg-slate-950 text-white p-7 flex flex-col justify-between shadow-xl border border-slate-800"
+            >
+              <div className="space-y-4">
+                <div className="w-10 h-10 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-sm font-black shadow-xs">
+                  01
+                </div>
+                <h3 className="text-xl font-bold tracking-tight text-white leading-snug">
+                  S&apos;abonner aux fiches services
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed mt-1">
-                  Pas de note 1 à 5 étoiles : uniquement des explications détaillées et constructives pour faire progresser le produit.
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Les clients découvrent vos services (applications, commerces, restaurants) et s&apos;y abonnent pour suivre votre actualité et donner leur avis.
                 </p>
               </div>
-            </div>
 
-            <div className="pt-4">
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-white/90 border border-slate-200 px-3.5 py-1.5 rounded-full shadow-sm">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Textes argumentés</span>
-              </span>
-            </div>
-          </motion.div>
+              <div className="pt-6 border-t border-slate-800/80 mt-6 flex items-center justify-between">
+                <span className="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Catalogue public
+                </span>
+                <Link
+                  href="/app/explore"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  <span>Explorer</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </motion.div>
 
-          {/* Card 3 (Right - Multi-layer widgets) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="lg:col-span-4 flex flex-col justify-between gap-4"
-          >
-            {/* Top Sub-widget: Analytics Graph */}
-            <div className="rounded-3xl bg-gradient-to-br from-indigo-900 via-indigo-950 to-purple-950 p-5 text-white shadow-xl border border-indigo-800/60 relative overflow-hidden">
-              <div className="flex items-center justify-between text-xs mb-3">
-                <span className="font-bold text-slate-300">Annonces & Mises à Jour</span>
-                <span className="text-[10px] font-bold bg-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded-full">
-                  Étape 03
+            {/* Step 02 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="mint-card rounded-3xl p-7 flex flex-col justify-between shadow-xs border border-emerald-200/80"
+            >
+              <div className="space-y-4">
+                <div className="w-10 h-10 rounded-full bg-slate-950 text-white flex items-center justify-center text-sm font-black shadow-xs">
+                  02
+                </div>
+                <h3 className="text-xl font-bold tracking-tight text-slate-950 leading-snug">
+                  Rédiger un retour modéré par IA
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Zéro note par étoiles : uniquement des explications constructives. Notre arbitre IA vérifie la conformité pour éliminer les insultes et le dénigrement.
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-emerald-200/60 mt-6 flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Arbitre IA automatique
+                </span>
+                <span className="text-[11px] font-bold text-slate-500 bg-white px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  Qualité vérifiée
                 </span>
               </div>
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <div className="text-2xl font-black text-white tracking-tight">
-                    1 420
-                  </div>
-                  <div className="text-[10px] text-slate-400">Abonnés informés par MAJ</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-base font-bold text-emerald-400">+98.4%</div>
-                  <div className="text-[10px] text-slate-400">Taux d&apos;engagement</div>
-                </div>
-              </div>
-            </div>
+            </motion.div>
 
-            {/* Bottom Sub-widget: Verified Chef & Restaurant card with Chef.jpg */}
-            <div className="glass-panel rounded-3xl p-5 shadow-lg flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md shrink-0 border-2 border-white">
-                <Image
-                  src="/Chef.jpg"
-                  alt="Cheffe de restaurant à Lomé"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <h4 className="text-sm font-bold text-slate-900">
-                    Amina Lawson
-                  </h4>
-                  <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+            {/* Step 03 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="forest-card rounded-3xl p-7 text-white flex flex-col justify-between shadow-xl relative overflow-hidden"
+            >
+              <div className="space-y-4">
+                <div className="w-10 h-10 rounded-full bg-lime-400 text-slate-950 flex items-center justify-center text-sm font-black shadow-xs">
+                  03
                 </div>
-                <div className="text-xs text-indigo-600 font-semibold">
-                  Le Palmier Gourmand • Lomé
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                  &quot;850 abonnés notifiés à chaque nouvelle carte.&quot;
+                <h3 className="text-xl font-bold tracking-tight text-white leading-snug">
+                  Informer les abonnés des améliorations
+                </h3>
+                <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                  Dès qu&apos;une suggestion client est prise en compte, publiez une annonce pour notifier directement tous vos abonnés.
                 </p>
               </div>
-            </div>
 
-          </motion.div>
+              <div className="pt-6 border-t border-emerald-800/80 mt-6 flex items-center justify-between">
+                <span className="text-xs font-bold text-lime-300 flex items-center gap-1.5">
+                  <BellRing className="w-4 h-4 text-lime-300" />
+                  Notifications ciblées
+                </span>
+                <span className="text-[11px] font-bold text-emerald-200 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-800">
+                  Fidélisation active
+                </span>
+              </div>
+            </motion.div>
 
+          </div>
         </div>
+
+        {/* Section 2: Product Pillars */}
+        <div id="resultats" className="space-y-8 pt-6 border-t border-slate-200">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold uppercase tracking-wider">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Les Piliers du Produit</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">
+                Une approche pensée pour la qualité des échanges
+              </h3>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-sm">
+              Découvrez comment Fidback redéfinit la relation entre clients et entreprises au Togo.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {valuePillars.map((pillar, i) => {
+              const Icon = pillar.icon;
+              return (
+                <div
+                  key={i}
+                  className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex items-center gap-5 hover:border-emerald-300 transition-all group"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <Icon className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-500 block">
+                      {pillar.category}
+                    </span>
+                    <span className="text-xl font-black text-slate-950 tracking-tight block text-emerald-700">
+                      {pillar.metric}
+                    </span>
+                    <span className="text-xs text-slate-600 mt-0.5 block leading-snug">
+                      {pillar.desc}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
     </section>
   );

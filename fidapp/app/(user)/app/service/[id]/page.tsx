@@ -21,6 +21,8 @@ import {
   Loader2,
   Scale,
   RotateCcw,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { FeedbackItem, UpdateAnnouncementItem } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
@@ -32,6 +34,7 @@ interface ModerationResult {
   constructiveScore?: number;
   highlight?: string;
   suggestion?: string;
+  tags?: string[];
 }
 
 export default function ServiceDetailPage() {
@@ -113,7 +116,7 @@ export default function ServiceDetailPage() {
     setModerationResult(null);
 
     try {
-      // 1. Call Gemini AI Arbitrator
+      // 1. Call Gemini AI Arbitrator API
       const response = await fetch("/api/feedbacks/moderate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -127,13 +130,13 @@ export default function ServiceDetailPage() {
       const result: ModerationResult = await response.json();
       setModerationResult(result);
 
-      // 2. If Gemini rejects (injurious, humiliating, unfair comparative)
+      // 2. If rejected (injurious, unconstructive, diffamatory)
       if (result.status === "REJECTED") {
         setSubmitting(false);
         return; // Block submission
       }
 
-      // 3. If Gemini approves -> Add to stream
+      // 3. If approved -> Add to stream
       const newFb: FeedbackItem & { constructiveScore?: number; aiValidated?: boolean } = {
         id: `fb-${Date.now()}`,
         subscriptionId: "sub-me",
@@ -162,7 +165,7 @@ export default function ServiceDetailPage() {
         content: feedbackContent.trim(),
         moderationStatus: "APPROVED" as const,
         createdAt: "À l'instant",
-        constructiveScore: 85,
+        constructiveScore: 88,
         aiValidated: true,
       };
       setFeedbacks([newFb, ...feedbacks]);
@@ -179,38 +182,38 @@ export default function ServiceDetailPage() {
       {/* Back Button */}
       <Link
         href="/app/explore"
-        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-600 hover:text-slate-950 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4 text-emerald-600" />
         <span>Retour aux services</span>
       </Link>
 
       {/* Service Header Card with Image Banner */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
           <div className="md:col-span-8 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+              <span className="text-xs font-extrabold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                 {isFoodService ? "Restauration & FoodTech" : "Transport & Mobilité"}
               </span>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Entreprise Vérifiée
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                Entreprise Vérifiée 🇹🇬
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
               {isFoodService ? "Livraison Gozem Food & Menus" : "Course Moto & Taxi Lomé"}
             </h1>
             <div className="flex items-center gap-2 text-sm text-slate-500 font-semibold">
               <Building2 className="w-4 h-4 text-slate-400" />
               <span>Gozem Togo</span>
               <span>•</span>
-              <span>Lomé, Togo 🇹🇬</span>
+              <span>Lomé, Togo</span>
             </div>
           </div>
 
           <div className="md:col-span-4 flex flex-col items-start md:items-end gap-3">
-            <div className="relative w-28 h-20 rounded-2xl overflow-hidden shadow-sm border border-slate-200">
+            <div className="relative w-28 h-20 rounded-2xl overflow-hidden shadow-xs border border-emerald-100">
               <Image
                 src={isFoodService ? "/Chef.jpg" : "/img-entrepreneur.jpg"}
                 alt="Service illustration"
@@ -221,15 +224,15 @@ export default function ServiceDetailPage() {
             <button
               type="button"
               onClick={() => setIsSubscribed(!isSubscribed)}
-              className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-5 py-2.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-2 ${
                 isSubscribed
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-indigo-600 text-white shadow-md shadow-indigo-500/25 hover:bg-indigo-700"
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  : "bg-slate-950 text-white shadow-xs hover:bg-emerald-950"
               }`}
             >
               {isSubscribed ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>Abonné à ce service</span>
                 </>
               ) : (
@@ -242,18 +245,18 @@ export default function ServiceDetailPage() {
           </div>
         </div>
 
-        <p className="text-sm text-slate-600 leading-relaxed pt-2 border-t border-slate-100">
-          Service de transport urbain sécurisé dans le Grand Lomé. Les retours textuels déposés ici sont analysés pour garantir des échanges respectueux, 100% qualitatifs et constructifs.
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-2 border-t border-slate-100">
+          Service de transport urbain sécurisé dans le Grand Lomé. Les retours textuels déposés ici sont analysés par notre modèle IA pour garantir des échanges respectueux, 100% qualitatifs et directement exploitables par l&apos;équipe dirigeante.
         </p>
 
         <div className="flex items-center gap-6 text-xs text-slate-500 pt-2">
-          <span className="font-bold text-slate-900 flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-indigo-600" />
+          <span className="font-bold text-slate-950 flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-emerald-600" />
             890 abonnés actifs
           </span>
           <span>•</span>
-          <span className="font-bold text-slate-900 flex items-center gap-1.5">
-            <MessageSquareText className="w-4 h-4 text-indigo-600" />
+          <span className="font-bold text-slate-950 flex items-center gap-1.5">
+            <MessageSquareText className="w-4 h-4 text-emerald-600" />
             {feedbacks.length} feedbacks qualitatifs
           </span>
         </div>
@@ -262,24 +265,24 @@ export default function ServiceDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Form: Write Feedback (With Gemini AI Arbitrator) */}
         <div className="lg:col-span-6 space-y-6">
-          <div className="glass-card rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <MessageSquareQuote className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-base font-bold text-slate-900">
+                <MessageSquareQuote className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-base font-extrabold text-slate-950">
                   Partager votre retour d&apos;expérience
                 </h2>
               </div>
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                <Scale className="w-3 h-3 text-indigo-600" />
-                <span>Arbitre Qualité</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <Scale className="w-3 h-3 text-emerald-600" />
+                <span>Arbitre IA Actif</span>
               </span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-xs text-indigo-900 space-y-1">
-              <span className="font-bold block">💡 Charte Qualitative Fidback</span>
-              <p className="text-[11px] text-indigo-800/80 leading-relaxed">
-                Les retours <strong>injurieux, humiliants ou diffamatoires</strong> sont automatiquement rejetés par le système de modération. Expliquez clairement les faits, vos suggestions ou vos compliments.
+            <div className="p-3.5 rounded-2xl mint-card border border-emerald-200 text-xs text-emerald-950 space-y-1">
+              <span className="font-extrabold block">💡 Charte Qualitative Fidback</span>
+              <p className="text-[11px] text-emerald-900 leading-relaxed">
+                Les retours <strong>injurieux, agressifs ou hors-sujet</strong> sont automatiquement bloqués par notre système IA. Expliquez clairement les faits, vos suggestions concrètes ou vos compliments.
               </p>
             </div>
 
@@ -288,13 +291,13 @@ export default function ServiceDetailPage() {
               <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm space-y-2 animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center gap-2 font-bold text-rose-900">
                   <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
-                  <span>Feedback rejeté par l&apos;Arbitre Qualité</span>
+                  <span>Feedback rejeté par l&apos;Arbitre IA</span>
                 </div>
                 <p className="text-xs text-rose-800 leading-relaxed">
                   {moderationResult.reason}
                 </p>
                 {moderationResult.suggestion && (
-                  <div className="p-3 rounded-xl bg-white/80 border border-rose-200 text-[11px] text-rose-900 font-medium">
+                  <div className="p-3 rounded-xl bg-white/90 border border-rose-200 text-[11px] text-rose-900 font-medium">
                     <span className="font-bold block mb-0.5">💡 Conseil pour reformuler :</span>
                     {moderationResult.suggestion}
                   </div>
@@ -304,13 +307,13 @@ export default function ServiceDetailPage() {
 
             {/* AI Approval Success Banner */}
             {submittedSuccess && (
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm space-y-1.5 animate-in fade-in zoom-in duration-200">
-                <div className="flex items-center gap-2 font-bold text-emerald-900">
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm space-y-1.5 animate-in fade-in zoom-in duration-200">
+                <div className="flex items-center gap-2 font-extrabold text-emerald-950">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span>Feedback validé et approuvé !</span>
                 </div>
                 <p className="text-xs text-emerald-800">
-                  Score de qualité constructive : <strong className="text-emerald-950">{moderationResult?.constructiveScore || 95}%</strong>. Transmis aux fondateurs de Gozem Togo.
+                  Score de qualité constructive : <strong className="text-emerald-950">{moderationResult?.constructiveScore || 95}%</strong>. Transmis en direct à l&apos;équipe Gozem Togo.
                 </p>
               </div>
             )}
@@ -318,7 +321,7 @@ export default function ServiceDetailPage() {
             <form onSubmit={handleSubmitFeedback} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Votre retour d&apos;expérience détaillé
+                  Votre retour d&apos;expérience détaillé (qualitatif)
                 </label>
                 <textarea
                   rows={5}
@@ -331,26 +334,19 @@ export default function ServiceDetailPage() {
                     }
                   }}
                   placeholder="Décrivez précisément votre expérience (temps d'attente, application, paiement T-Money, relation client, suggestions constructives)..."
-                  className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs sm:text-sm leading-relaxed"
+                  className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs sm:text-sm leading-relaxed"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting || !isSubscribed || !feedbackContent.trim()}
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all duration-200"
+                className="w-full inline-flex items-center justify-center gap-2 pl-6 pr-3 py-3.5 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
               >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Vérification de conformité...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    <span>Envoyer mon feedback qualitatif</span>
-                  </>
-                )}
+                <span>{submitting ? "Vérification par l'Arbitre IA..." : "Envoyer mon feedback qualitatif"}</span>
+                <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </span>
               </button>
 
               {!isSubscribed && (
@@ -362,9 +358,9 @@ export default function ServiceDetailPage() {
           </div>
 
           {/* Announcements from Creator */}
-          <div className="glass-card rounded-3xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
-              <BellRing className="w-4 h-4 text-indigo-600" />
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <h2 className="text-base font-extrabold text-slate-950 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <BellRing className="w-4 h-4 text-emerald-600" />
               <span>Annonces & Mises à Jour de Gozem</span>
             </h2>
 
@@ -372,13 +368,13 @@ export default function ServiceDetailPage() {
               {announcements.map((ann) => (
                 <div
                   key={ann.id}
-                  className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-1.5"
+                  className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 space-y-1.5"
                 >
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-indigo-950">{ann.title}</span>
+                    <span className="font-bold text-emerald-950">{ann.title}</span>
                     <span className="text-slate-400">{ann.sentAt}</span>
                   </div>
-                  <p className="text-xs text-indigo-900/80 leading-relaxed">
+                  <p className="text-xs text-emerald-900/90 leading-relaxed">
                     {ann.message}
                   </p>
                 </div>
@@ -390,12 +386,12 @@ export default function ServiceDetailPage() {
         {/* Existing Feedbacks list */}
         <div className="lg:col-span-6 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-base font-extrabold text-slate-950">
               Retours de la communauté ({feedbacks.length})
             </h2>
-            <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
+            <span className="text-xs text-slate-500 font-semibold flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Modérés & Certifiés constructifs</span>
+              <span>Modérés & Certifiés IA</span>
             </span>
           </div>
 
@@ -403,27 +399,27 @@ export default function ServiceDetailPage() {
             {feedbacks.map((fb) => (
               <div
                 key={fb.id}
-                className="glass-card rounded-3xl p-6 shadow-sm space-y-3"
+                className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-300 transition-all"
               >
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center text-xs">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-900 font-extrabold flex items-center justify-center text-xs">
                       {fb.userPseudo?.substring(0, 2).toUpperCase() || "US"}
                     </div>
-                    <span className="font-bold text-slate-900">
+                    <span className="font-extrabold text-slate-950">
                       @{fb.userPseudo}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-slate-400">{fb.createdAt}</span>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      <span>Score {fb.constructiveScore || 90}%</span>
+                      <span>Qualité {fb.constructiveScore || 90}%</span>
                     </span>
                   </div>
                 </div>
 
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
                   &quot;{fb.content}&quot;
                 </p>
               </div>

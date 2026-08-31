@@ -14,6 +14,7 @@ import {
   Loader2,
   Lock,
   FlaskConical,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -61,7 +62,7 @@ function CheckoutContent() {
       features: [
         "Jusqu'à 5 fiches services (Publiques & Privées)",
         "Abonnés illimités",
-        "Feedbacks prioritaires & Export",
+        "Feedbacks prioritaires & Export CSV",
         "Annonces de mises à jour illimitées",
         "Mise en avant sur la page Explorer",
       ],
@@ -88,7 +89,7 @@ function CheckoutContent() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/checkout", {
+      await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,7 +121,6 @@ function CheckoutContent() {
   const handleSimulate = async () => {
     setSimLoading(true);
     try {
-      // Update the authenticated user's metadata to ACTIVE subscription
       const { error: updateError } = await supabase.auth.updateUser({
         data: {
           subscriptionStatus: "ACTIVE",
@@ -130,7 +130,6 @@ function CheckoutContent() {
       });
 
       if (updateError) {
-        // Even if not authenticated, redirect to dashboard for demo
         console.warn("Simulation sans session auth:", updateError.message);
       }
 
@@ -139,7 +138,6 @@ function CheckoutContent() {
         router.push("/dashboard?status=subscription_activated&mode=demo");
       }, 1200);
     } catch (err) {
-      // Fallback: direct redirect for demo
       setSuccess(true);
       setTimeout(() => {
         router.push("/dashboard?status=subscription_activated&mode=demo");
@@ -154,18 +152,18 @@ function CheckoutContent() {
       {/* Left Column: Plan & Payment Selection */}
       <div className="lg:col-span-7 space-y-6">
         {reason === "inactive_subscription" && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold p-4 rounded-2xl">
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold p-4 rounded-2xl">
             Votre abonnement entreprise est actuellement inactif. Activez-le pour accéder à votre tableau de bord.
           </div>
         )}
 
         {/* Step 1: Select Plan */}
-        <div className="glass-card rounded-3xl p-6 shadow-sm border border-slate-200">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-black">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
+          <h2 className="text-xs font-extrabold text-slate-950 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-slate-950 text-white text-xs flex items-center justify-center font-black">
               1
             </span>
-            <span>Choisissez votre formule</span>
+            <span>Choisissez votre formule d'abonnement</span>
           </h2>
 
           <div className="grid grid-cols-3 gap-3 mb-4">
@@ -174,14 +172,14 @@ function CheckoutContent() {
                 key={key}
                 type="button"
                 onClick={() => setSelectedPlan(key)}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
+                className={`p-4 rounded-2xl border text-left transition-all ${
                   selectedPlan === key
-                    ? "border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20"
+                    ? "border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20"
                     : "border-slate-200 bg-white hover:border-slate-300"
                 }`}
               >
-                <div className="text-xs font-bold text-slate-900">{plan.name}</div>
-                <div className="text-sm font-black text-indigo-600 mt-1">
+                <div className="text-xs font-bold text-slate-950">{plan.name}</div>
+                <div className="text-sm font-black text-emerald-800 mt-1">
                   {(billingCycle === "monthly" ? plan.monthly : plan.yearly).toLocaleString(
                     "fr-FR"
                   )}{" "}
@@ -192,15 +190,15 @@ function CheckoutContent() {
           </div>
 
           {/* Billing toggle */}
-          <div className="flex items-center justify-between p-3 bg-slate-100/80 rounded-2xl text-xs">
-            <span className="font-semibold text-slate-700">Fréquence de facturation</span>
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
+            <span className="font-bold text-slate-700">Fréquence de facturation</span>
             <div className="flex gap-1">
               <button
                 type="button"
                 onClick={() => setBillingCycle("monthly")}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                className={`px-3.5 py-1.5 rounded-full font-bold transition-all ${
                   billingCycle === "monthly"
-                    ? "bg-white text-slate-900 shadow-sm"
+                    ? "bg-slate-950 text-white shadow-xs"
                     : "text-slate-500 hover:text-slate-900"
                 }`}
               >
@@ -209,14 +207,14 @@ function CheckoutContent() {
               <button
                 type="button"
                 onClick={() => setBillingCycle("yearly")}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 ${
+                className={`px-3.5 py-1.5 rounded-full font-bold transition-all flex items-center gap-1 ${
                   billingCycle === "yearly"
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "bg-emerald-600 text-white shadow-xs"
                     : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 <span>Annuelle</span>
-                <span className="text-[9px] bg-emerald-400 text-emerald-950 font-black px-1 rounded">
+                <span className="text-[9px] bg-lime-400 text-slate-950 font-black px-1.5 py-0.5 rounded-full">
                   -20%
                 </span>
               </button>
@@ -225,12 +223,12 @@ function CheckoutContent() {
         </div>
 
         {/* Step 2: Payment Provider */}
-        <div className="glass-card rounded-3xl p-6 shadow-sm border border-slate-200">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-black">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
+          <h2 className="text-xs font-extrabold text-slate-950 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-slate-950 text-white text-xs flex items-center justify-center font-black">
               2
             </span>
-            <span>Mode de règlement</span>
+            <span>Mode de règlement togolais</span>
           </h2>
 
           <div className="space-y-3 mb-4">
@@ -238,22 +236,22 @@ function CheckoutContent() {
               onClick={() => setPaymentProvider("TMONEY")}
               className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
                 paymentProvider === "TMONEY"
-                  ? "border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20"
+                  ? "border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-black flex items-center justify-center text-xs">
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-black flex items-center justify-center text-xs shadow-xs">
                   TM
                 </div>
                 <div>
                   <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                     T-Money Togo (Togocom)
-                    <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
-                      Populaire
+                    <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
+                      Recommandé 🇹🇬
                     </span>
                   </div>
-                  <div className="text-xs text-slate-500">Paiement instantané par push USSD</div>
+                  <div className="text-xs text-slate-500">Paiement direct par validation USSD sur votre téléphone</div>
                 </div>
               </div>
               <input
@@ -261,7 +259,7 @@ function CheckoutContent() {
                 name="provider"
                 checked={paymentProvider === "TMONEY"}
                 onChange={() => setPaymentProvider("TMONEY")}
-                className="radio radio-primary radio-sm"
+                className="accent-emerald-600"
               />
             </label>
 
@@ -269,19 +267,19 @@ function CheckoutContent() {
               onClick={() => setPaymentProvider("FLOOZ")}
               className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
                 paymentProvider === "FLOOZ"
-                  ? "border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20"
+                  ? "border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-black flex items-center justify-center text-xs">
+                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-black flex items-center justify-center text-xs shadow-xs">
                   FL
                 </div>
                 <div>
                   <div className="text-sm font-bold text-slate-900">
                     Flooz (Moov Africa Togo)
                   </div>
-                  <div className="text-xs text-slate-500">Règlement mobile sécurisé</div>
+                  <div className="text-xs text-slate-500">Règlement instantané via Moov Money</div>
                 </div>
               </div>
               <input
@@ -289,7 +287,7 @@ function CheckoutContent() {
                 name="provider"
                 checked={paymentProvider === "FLOOZ"}
                 onChange={() => setPaymentProvider("FLOOZ")}
-                className="radio radio-primary radio-sm"
+                className="accent-emerald-600"
               />
             </label>
 
@@ -297,19 +295,19 @@ function CheckoutContent() {
               onClick={() => setPaymentProvider("STRIPE")}
               className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
                 paymentProvider === "STRIPE"
-                  ? "border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20"
+                  ? "border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
-                  <CreditCard className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-slate-950 text-white flex items-center justify-center shadow-xs">
+                  <CreditCard className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
                   <div className="text-sm font-bold text-slate-900">
                     Carte Bancaire (Visa / Mastercard)
                   </div>
-                  <div className="text-xs text-slate-500">Passerelle sécurisée Stripe / Paygate</div>
+                  <div className="text-xs text-slate-500">Passerelle internationale sécurisée</div>
                 </div>
               </div>
               <input
@@ -317,7 +315,7 @@ function CheckoutContent() {
                 name="provider"
                 checked={paymentProvider === "STRIPE"}
                 onChange={() => setPaymentProvider("STRIPE")}
-                className="radio radio-primary radio-sm"
+                className="accent-emerald-600"
               />
             </label>
           </div>
@@ -325,7 +323,7 @@ function CheckoutContent() {
           {(paymentProvider === "TMONEY" || paymentProvider === "FLOOZ") && (
             <div className="pt-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Numéro de téléphone ({paymentProvider === "TMONEY" ? "Togocom" : "Moov"})
+                Numéro Mobile Money ({paymentProvider === "TMONEY" ? "Togocom" : "Moov"})
               </label>
               <div className="relative">
                 <Smartphone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -334,7 +332,7 @@ function CheckoutContent() {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="90 00 00 00"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-semibold"
                 />
               </div>
             </div>
@@ -344,31 +342,31 @@ function CheckoutContent() {
 
       {/* Right Column: Order Summary */}
       <div className="lg:col-span-5">
-        <div className="glass-card rounded-3xl p-6 shadow-xl border border-slate-200 sticky top-24">
-          <h2 className="text-base font-bold text-slate-900 pb-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm sticky top-24 space-y-4">
+          <h2 className="text-base font-extrabold text-slate-950 pb-4 border-b border-slate-100 flex items-center justify-between">
             <span>Récapitulatif de commande</span>
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-xs font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               En direct
             </span>
           </h2>
 
-          <div className="py-4 space-y-3 text-sm">
+          <div className="py-2 space-y-3 text-xs sm:text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 font-medium">Entreprise :</span>
-              <span className="font-bold text-slate-900">{companyName}</span>
+              <span className="text-slate-500 font-medium">Entreprise :</span>
+              <span className="font-extrabold text-slate-900">{companyName}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 font-medium">Formule :</span>
-              <span className="font-bold text-indigo-600">{currentPlan.name}</span>
+              <span className="text-slate-500 font-medium">Formule :</span>
+              <span className="font-extrabold text-emerald-800">{currentPlan.name}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 font-medium">Facturation :</span>
+              <span className="text-slate-500 font-medium">Facturation :</span>
               <span className="font-semibold text-slate-800">
                 {billingCycle === "monthly" ? "Mensuelle" : "Annuelle (-20%)"}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 font-medium">Moyen :</span>
+              <span className="text-slate-500 font-medium">Moyen :</span>
               <span className="font-semibold text-slate-800">
                 {paymentProvider === "TMONEY"
                   ? "T-Money Togo"
@@ -381,7 +379,7 @@ function CheckoutContent() {
 
           <div className="py-3 border-t border-slate-100 space-y-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Inclus dans votre offre :
+              Inclus dans votre abonnement :
             </span>
             {currentPlan.features.map((feat, idx) => (
               <div key={idx} className="flex items-center gap-2 text-xs text-slate-600">
@@ -391,16 +389,16 @@ function CheckoutContent() {
             ))}
           </div>
 
-          <div className="mt-4 p-4 rounded-2xl bg-indigo-50/80 border border-indigo-100 flex items-center justify-between">
+          <div className="p-4 rounded-2xl mint-card border border-emerald-200 flex items-center justify-between">
             <div>
-              <div className="text-xs text-indigo-900 font-semibold">Total à régler</div>
-              <div className="text-[10px] text-indigo-700/80">TVA comprise • FCFA</div>
+              <div className="text-xs text-emerald-950 font-extrabold">Total à régler</div>
+              <div className="text-[10px] text-emerald-800">TVA comprise • FCFA</div>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-black text-indigo-950">
+              <span className="text-2xl font-black text-slate-950">
                 {amountToPay.toLocaleString("fr-FR")}
               </span>
-              <span className="text-xs font-bold text-indigo-800 ml-1">FCFA</span>
+              <span className="text-xs font-bold text-slate-700 ml-1">FCFA</span>
             </div>
           </div>
 
@@ -408,55 +406,55 @@ function CheckoutContent() {
             type="button"
             onClick={handleCheckout}
             disabled={loading || success}
-            className="w-full mt-6 inline-flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all duration-200"
+            className="w-full inline-flex items-center justify-center gap-2 pl-6 pr-3 py-4 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : success ? (
-              <span className="flex items-center gap-1.5 text-emerald-200">
-                <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                Abonnement Activé ! Redirection...
-              </span>
-            ) : (
-              <>
-                <Lock className="w-4 h-4" />
-                <span>Activer mon abonnement ({amountToPay.toLocaleString("fr-FR")} FCFA)</span>
+            <span>
+              {loading
+                ? "Traitement en cours..."
+                : success
+                ? "Abonnement Activé !"
+                : `Activer mon abonnement (${amountToPay.toLocaleString("fr-FR")} FCFA)`}
+            </span>
+            <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : success ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              ) : (
                 <ArrowRight className="w-4 h-4" />
-              </>
-            )}
+              )}
+            </span>
           </button>
 
-          <div className="mt-4 text-center">
-            <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Paiement sécurisé et chiffré de bout en bout</span>
-            </p>
-          </div>
+          <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1 pt-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Paiement sécurisé et chiffré de bout en bout</span>
+          </p>
 
           {/* ── Mode Démo : Simulation d'abonnement ── */}
-          <div className="mt-5 pt-5 border-t border-dashed border-slate-200">
+          <div className="pt-4 border-t border-dashed border-slate-200">
             <div className="mb-3 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200">
               <FlaskConical className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <p className="text-[11px] text-amber-800 font-semibold">
-                Mode démo — aucun paiement réel ne sera effectué
+              <p className="text-[11px] text-amber-900 font-semibold">
+                Mode test direct — active instantanément le dashboard
               </p>
             </div>
             <button
               type="button"
               onClick={handleSimulate}
               disabled={simLoading || success}
-              className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl font-bold text-sm text-amber-900 bg-amber-100 border border-amber-300 hover:bg-amber-200 disabled:opacity-50 transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-full font-bold text-xs text-slate-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 disabled:opacity-50 transition-all"
             >
               {simLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : success ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Abonnement simulé ! Redirection...</span>
+                  <span>Abonnement activé ! Redirection...</span>
                 </>
               ) : (
                 <>
-                  <FlaskConical className="w-4 h-4" />
+                  <FlaskConical className="w-4 h-4 text-amber-700" />
                   <span>Simuler le paiement (Mode Démo)</span>
                 </>
               )}
@@ -470,11 +468,11 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F8FAF9] py-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-emerald-500/40 bg-emerald-950 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
               <Image
                 src="/logo.png"
                 alt="Fidback Logo"
@@ -483,19 +481,23 @@ export default function CheckoutPage() {
                 priority
               />
             </div>
-            <span className="font-extrabold text-2xl tracking-tight text-slate-900">
+            <span className="font-black text-2xl tracking-tight text-slate-950">
               Fidback
             </span>
           </Link>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-extrabold border border-emerald-300 mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Offres PME & Startups</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
             Finalisation de l&apos;adhésion entreprise
           </h1>
-          <p className="text-sm text-slate-600 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
             Rejoignez le programme de feedbacks produits qualitatifs au Togo
           </p>
         </div>
 
-        <Suspense fallback={<div className="glass-card rounded-3xl p-12 text-center text-slate-500">Chargement du récapitulatif...</div>}>
+        <Suspense fallback={<div className="bg-white rounded-3xl p-12 text-center text-slate-500 border border-slate-200">Chargement du récapitulatif...</div>}>
           <CheckoutContent />
         </Suspense>
       </div>

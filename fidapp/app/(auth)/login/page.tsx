@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -98,7 +99,6 @@ function LoginForm() {
       });
 
       if (authError) {
-        // Map Supabase error codes to French user-friendly messages
         if (
           authError.message.includes("Invalid login credentials") ||
           authError.message.includes("invalid_credentials")
@@ -107,7 +107,7 @@ function LoginForm() {
         }
         if (authError.message.includes("Email not confirmed")) {
           setInfo(
-            "Votre email n'est pas encore confirmé. Consultez votre boite de réception et cliquez sur le lien de vérification."
+            "Votre email n'est pas encore confirmé. Consultez votre boîte de réception et cliquez sur le lien de vérification."
           );
           setLoading(false);
           return;
@@ -135,47 +135,47 @@ function LoginForm() {
   };
 
   return (
-    <div className="glass-card rounded-3xl p-8 shadow-xl">
+    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">
       {/* Role Switcher */}
-      <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-2xl mb-6 border border-slate-200">
+      <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-full border border-slate-200">
         <button
           type="button"
           onClick={() => { setRole("user"); setError(null); setInfo(null); }}
-          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-full text-xs font-extrabold transition-all ${
             role === "user"
-              ? "bg-white text-slate-900 shadow-sm"
+              ? "bg-slate-950 text-white shadow-xs"
               : "text-slate-500 hover:text-slate-800"
           }`}
         >
           <User className="w-4 h-4" />
-          <span>Utilisateur</span>
+          <span>Utilisateur / Client</span>
         </button>
         <button
           type="button"
           onClick={() => { setRole("company"); setError(null); setInfo(null); }}
-          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-full text-xs font-extrabold transition-all ${
             role === "company"
-              ? "bg-indigo-600 text-white shadow-sm"
+              ? "bg-emerald-500 text-slate-950 shadow-xs"
               : "text-slate-500 hover:text-slate-800"
           }`}
         >
           <Building2 className="w-4 h-4" />
-          <span>Entreprise</span>
+          <span>Entreprise / PME</span>
         </button>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-5 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-700 text-xs sm:text-sm">
-          <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-xs sm:text-sm">
+          <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Info (email not confirmed) */}
       {info && (
-        <div className="mb-5 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-800 text-xs sm:text-sm">
-          <ShieldCheck className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-900 text-xs sm:text-sm">
+          <ShieldCheck className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
           <span>{info}</span>
         </div>
       )}
@@ -184,7 +184,7 @@ function LoginForm() {
         {/* Email */}
         <div>
           <label htmlFor="login-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            {role === "company" ? "Email de l'entreprise" : "Adresse email"}
+            {role === "company" ? "Email professionnel de l'entreprise" : "Adresse email"}
           </label>
           <div className="relative">
             <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -196,7 +196,7 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={role === "company" ? "contact@entreprise.tg" : "utilisateur@domaine.com"}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
             />
           </div>
         </div>
@@ -207,7 +207,7 @@ function LoginForm() {
             <label htmlFor="login-password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
               Mot de passe
             </label>
-            <Link href="#" className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold">
+            <Link href="#" className="text-xs text-emerald-700 hover:text-emerald-900 font-bold">
               Oublié ?
             </Link>
           </div>
@@ -221,7 +221,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+              className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
             />
             <button
               type="button"
@@ -237,16 +237,12 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 transition-all duration-200"
+          className="w-full mt-3 inline-flex items-center justify-center gap-2 pl-6 pr-3 py-3.5 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
         >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <span>Se connecter{role === "company" ? " — Entreprise" : ""}</span>
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
+          <span>{loading ? "Connexion en cours..." : `Se connecter${role === "company" ? " — Entreprise" : ""}`}</span>
+          <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+          </span>
         </button>
       </form>
 
@@ -254,21 +250,21 @@ function LoginForm() {
         {role === "company" ? (
           <p>
             Votre entreprise n&apos;est pas encore membre ?{" "}
-            <Link href="/register-company" className="font-bold text-indigo-600 hover:text-indigo-700 underline">
+            <Link href="/register-company" className="font-bold text-emerald-800 hover:text-emerald-950 underline">
               Inscrire mon entreprise
             </Link>
           </p>
         ) : (
           <>
             <p>
-              Pas encore de compte ?{" "}
-              <Link href="/register" className="font-bold text-indigo-600 hover:text-indigo-700 underline">
+              Pas encore de compte membre ?{" "}
+              <Link href="/register" className="font-bold text-emerald-800 hover:text-emerald-950 underline">
                 Créer un compte gratuit
               </Link>
             </p>
             <p className="text-slate-400">
               Vous êtes une entreprise ?{" "}
-              <Link href="/login?role=company" className="font-semibold text-purple-600 hover:text-purple-700">
+              <Link href="/login?role=company" className="font-bold text-slate-700 hover:text-slate-950">
                 Connexion entreprise
               </Link>
             </p>
@@ -282,32 +278,29 @@ function LoginForm() {
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
-      {/* Ambient glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#F8FAF9] relative overflow-hidden font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Back button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 mb-6 transition-colors group"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-950 mb-6 transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft className="w-4 h-4 text-emerald-600 group-hover:-translate-x-0.5 transition-transform" />
           <span>Retour à l&apos;accueil</span>
         </Link>
 
         {/* Logo */}
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2.5 group mb-5">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-emerald-500/40 bg-emerald-950 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
               <Image src="/logo.png" alt="Fidback Logo" fill className="object-cover" priority />
             </div>
-            <span className="font-extrabold text-2xl tracking-tight text-slate-900">Fidback</span>
+            <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
             Connexion à votre espace
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-xs sm:text-sm text-slate-600">
             Accédez à vos feedbacks et pilotez vos retours produits
           </p>
         </div>
@@ -316,8 +309,8 @@ export default function LoginPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <Suspense
           fallback={
-            <div className="glass-card rounded-3xl p-8 text-center text-sm text-slate-500">
-              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-500" />
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center text-sm text-slate-500">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-emerald-600" />
               Chargement...
             </div>
           }
@@ -327,8 +320,8 @@ export default function LoginPage() {
 
         {/* Security note */}
         <p className="mt-4 text-center text-[11px] text-slate-400 flex items-center justify-center gap-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Connexion chiffrée et sécurisée</span>
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Connexion chiffrée et sécurisée par Supabase</span>
         </p>
       </div>
     </div>

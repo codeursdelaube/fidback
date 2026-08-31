@@ -12,6 +12,7 @@ import {
   Filter,
   ArrowRight,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { ServiceItem } from "@/lib/types";
 
@@ -143,13 +144,17 @@ export default function ExploreServicesPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold uppercase tracking-wider mb-2">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Annuaire & Écosystème Togo</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
           Explorer les Services & Entreprises du Togo 🇹🇬
         </h1>
-        <p className="text-sm text-slate-600 mt-1">
+        <p className="text-xs sm:text-sm text-slate-600 mt-1">
           Abonnez-vous aux fiches services pour recevoir leurs mises à jour et partager des retours qualitatifs détaillés.
         </p>
       </div>
@@ -163,7 +168,7 @@ export default function ExploreServicesPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher par nom de service, entreprise..."
-            className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm shadow-sm"
+            className="w-full pl-10 pr-4 py-3 rounded-full bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm shadow-xs"
           />
         </div>
 
@@ -174,9 +179,9 @@ export default function ExploreServicesPage() {
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "bg-slate-950 text-white shadow-xs"
                     : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -192,19 +197,19 @@ export default function ExploreServicesPage() {
         {filtered.map((service) => (
           <div
             key={service.id}
-            className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+            className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between"
           >
             <div>
               {service.bannerUrl && (
-                <div className="relative w-full h-36 rounded-2xl overflow-hidden mb-4 border border-slate-100 shadow-inner">
+                <div className="relative w-full h-36 rounded-2xl overflow-hidden mb-4 border border-emerald-100 shadow-xs">
                   <Image
                     src={service.bannerUrl}
                     alt={service.name}
                     fill
-                    className="object-cover hover:scale-105 transition-transform duration-300"
+                    className="object-cover hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-2 left-2">
-                    <span className="text-[10px] font-bold text-slate-900 bg-white/90 backdrop-blur-sm px-2.5 py-0.5 rounded-full shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-900 bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-xs">
                       {service.category}
                     </span>
                   </div>
@@ -213,7 +218,7 @@ export default function ExploreServicesPage() {
 
               <div className="flex items-center justify-between mb-3">
                 {!service.bannerUrl && (
-                  <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                     {service.category}
                   </span>
                 )}
@@ -221,15 +226,15 @@ export default function ExploreServicesPage() {
                 <button
                   type="button"
                   onClick={() => toggleSubscription(service.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ml-auto ${
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ml-auto ${
                     service.isSubscribed
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "bg-indigo-600 text-white shadow-sm hover:bg-indigo-700"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold"
+                      : "bg-slate-950 text-white shadow-xs hover:bg-emerald-950"
                   }`}
                 >
                   {service.isSubscribed ? (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Abonné</span>
                     </>
                   ) : (
@@ -243,7 +248,7 @@ export default function ExploreServicesPage() {
 
               <div className="flex items-center gap-2 mb-1">
                 <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-xs font-bold text-slate-500">
+                <span className="text-xs font-extrabold text-slate-600">
                   {service.companyName}
                 </span>
               </div>
@@ -259,17 +264,17 @@ export default function ExploreServicesPage() {
 
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-3 text-xs text-slate-500">
-                <span className="flex items-center gap-1 font-semibold text-slate-700">
-                  <Users className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="flex items-center gap-1 font-bold text-slate-800">
+                  <Users className="w-3.5 h-3.5 text-emerald-600" />
                   {service._count?.subscriptions} abonnés
                 </span>
                 <span>•</span>
-                <span>{service._count?.feedbacks} feedbacks</span>
+                <span>{service._count?.feedbacks} retours</span>
               </div>
 
               <Link
                 href={`/app/service/${service.id}`}
-                className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-700 hover:text-emerald-800"
               >
                 <span>Fiche & Avis</span>
                 <ArrowRight className="w-3.5 h-3.5" />

@@ -87,6 +87,24 @@ export async function proxy(request: NextRequest) {
   // ── Auth Guards for Protected Routes ──────────────────────────────────────
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isUserAppRoute = pathname.startsWith("/app");
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/register-company";
+
+  // Redirect already authenticated users away from login/register
+  if (isAuthRoute && user) {
+    const userRole = user.user_metadata?.role || "user";
+    if (userRole === "company") {
+      return applySecurityHeaders(
+        NextResponse.redirect(new URL("/dashboard", request.url))
+      );
+    } else {
+      return applySecurityHeaders(
+        NextResponse.redirect(new URL("/app", request.url))
+      );
+    }
+  }
 
   if (isDashboardRoute || isUserAppRoute) {
     if (!user) {

@@ -15,6 +15,7 @@ import {
   Save,
   Trash2,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -178,26 +179,30 @@ export default function DashboardSettingsPage() {
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold uppercase tracking-wider mb-2">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Image de Marque</span>
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
           Personnalisation du Profil Entreprise
         </h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-xs sm:text-sm text-slate-600">
           Personnalisez votre identité de marque (logo, bannière, coordonnées) visible par vos clients et abonnés togolais.
         </p>
       </div>
 
       {saveSuccess && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm font-bold flex items-center gap-2 animate-in fade-in duration-200">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>Profil entreprise mis à jour avec succès ! Vos informations sont désormais visibles par vos abonnés.</span>
+          <span>Profil entreprise mis à jour avec succès ! Vos informations sont synchronisées en direct.</span>
         </div>
       )}
 
       <form onSubmit={handleSaveProfile} className="space-y-8">
         {/* Visual Brand Assets (Cover & Logo) */}
-        <div className="glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <h3 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-600" />
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+          <h3 className="text-base font-extrabold text-slate-950 pb-3 border-b border-slate-100 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-emerald-600" />
             <span>Identité Visuelle & Médias</span>
           </h3>
 
@@ -224,9 +229,9 @@ export default function DashboardSettingsPage() {
           />
 
           {/* Cover & Logo Preview Card */}
-          <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-900 shadow-sm">
+          <div className="relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-950 shadow-xs">
             {/* Banner Cover */}
-            <div className="relative w-full h-44 sm:h-52 bg-slate-800">
+            <div className="relative w-full h-44 sm:h-52 bg-slate-900">
               {coverUrl && (
                 <Image
                   src={coverUrl}
@@ -235,13 +240,13 @@ export default function DashboardSettingsPage() {
                   className="object-cover opacity-85"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent" />
 
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
                 disabled={uploadingCover}
-                className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-bold backdrop-blur-md border border-white/20 shadow-md transition-all"
+                className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/80 hover:bg-slate-950 text-white text-xs font-bold backdrop-blur-md border border-white/20 shadow-xs transition-all"
               >
                 {uploadingCover ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -284,7 +289,7 @@ export default function DashboardSettingsPage() {
                   <div className="text-xl font-extrabold tracking-tight">
                     {companyName || "Nom de l'entreprise"}
                   </div>
-                  <div className="text-xs text-indigo-300 font-medium flex items-center gap-2 mt-0.5">
+                  <div className="text-xs text-emerald-300 font-bold flex items-center gap-2 mt-0.5">
                     <span>{category}</span>
                     <span>•</span>
                     <span>{city}</span>
@@ -301,8 +306,8 @@ export default function DashboardSettingsPage() {
         </div>
 
         {/* Company Details Form */}
-        <div className="glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <h3 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+          <h3 className="text-base font-extrabold text-slate-950 pb-3 border-b border-slate-100">
             Informations Générales
           </h3>
 
@@ -317,7 +322,7 @@ export default function DashboardSettingsPage() {
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Ex: Gozem Togo, Le Palmier Gourmand..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-semibold"
               />
             </div>
 
@@ -328,7 +333,7 @@ export default function DashboardSettingsPage() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
               >
                 <option value="Transport & Mobilité">Transport & Mobilité</option>
                 <option value="Restauration & FoodTech">Restauration & FoodTech</option>
@@ -349,7 +354,7 @@ export default function DashboardSettingsPage() {
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
                 placeholder="Ex: La plateforme de mobilité préférée des Togolais"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
               />
             </div>
 
@@ -362,15 +367,15 @@ export default function DashboardSettingsPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Présentez votre entreprise et votre mission à vos abonnés togolais..."
-                className="w-full p-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm leading-relaxed"
+                className="w-full p-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm leading-relaxed"
               />
             </div>
           </div>
         </div>
 
         {/* Contact & Localisation */}
-        <div className="glass-card rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <h3 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+          <h3 className="text-base font-extrabold text-slate-950 pb-3 border-b border-slate-100">
             Coordonnées & Siège Togo
           </h3>
 
@@ -386,7 +391,7 @@ export default function DashboardSettingsPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Lomé, Togo"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
                 />
               </div>
             </div>
@@ -402,7 +407,7 @@ export default function DashboardSettingsPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+228 90 00 00 00"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
                 />
               </div>
             </div>
@@ -418,7 +423,7 @@ export default function DashboardSettingsPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="contact@entreprise.tg"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
                 />
               </div>
             </div>
@@ -434,7 +439,7 @@ export default function DashboardSettingsPage() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://monentreprise.tg"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm"
                 />
               </div>
             </div>
@@ -446,19 +451,12 @@ export default function DashboardSettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center gap-2 pl-6 pr-3 py-3 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
           >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Enregistrement en cours...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Enregistrer les modifications</span>
-              </>
-            )}
+            <span>{saving ? "Enregistrement en cours..." : "Enregistrer les modifications"}</span>
+            <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            </span>
           </button>
         </div>
       </form>

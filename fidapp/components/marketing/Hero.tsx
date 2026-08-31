@@ -1,217 +1,206 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "motion/react";
 import {
-  ArrowRight,
+  ArrowUpRight,
   Search,
-  MessageSquare,
-  Building2,
-  Users,
-  ShieldCheck,
+  Sparkles,
   TrendingUp,
-  Check,
-  BellRing,
+  MessageSquareQuote,
+  ShieldCheck,
+  Radio,
+  Zap,
+  CheckCircle2,
 } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative pt-8 pb-20 overflow-hidden">
-      {/* Ambient background glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[700px] pointer-events-none -z-10">
-        <div className="absolute top-4 right-10 w-[32rem] h-[32rem] bg-purple-400/25 rounded-full blur-3xl" />
-        <div className="absolute top-20 left-10 w-[28rem] h-[28rem] bg-indigo-400/20 rounded-full blur-3xl" />
-      </div>
-
+    <section className="relative pt-6 sm:pt-10 pb-20 overflow-hidden ambient-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-6 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
           {/* LEFT COLUMN */}
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            className="lg:col-span-6 space-y-6 text-left"
+            className="lg:col-span-7 space-y-6 text-left"
           >
-            {/* Minimalist Pill Header */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 border border-white/80 shadow-sm text-xs font-semibold text-indigo-800 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-              <span>Plateforme togolaise de feedbacks qualitatifs 🇹🇬</span>
+            {/* Top Green Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100/80 border border-emerald-300/80 shadow-xs text-xs font-bold text-emerald-900">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
+              <span className="uppercase tracking-wider">RETROUVEZ LA VOIX DE VOS CLIENTS • TOGO 🇹🇬</span>
             </div>
 
-            {/* Headline matching image style */}
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-slate-950 tracking-tight leading-[1.12]">
-              Faites grandir votre entreprise avec des{" "}
-              <span className="gradient-text">feedbacks qualitatifs</span> réels.
+            {/* Headline with curved green accent effect */}
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black text-slate-950 tracking-tight leading-[1.12]">
+              Pilotez l&apos;expérience de vos clients pour{" "}
+              <span className="relative inline-block text-emerald-600">
+                <span>réussir</span>
+                <svg
+                  className="absolute -bottom-2 left-0 w-full h-3 text-emerald-400"
+                  viewBox="0 0 100 20"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M0 15 Q 50 0 100 15"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              .
             </h1>
 
             {/* Subhead */}
             <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
-              Fini les faux avis par étoiles. Les applications, restaurants et entreprises togolaises reçoivent des retours textuels authentiques, précis et directement exploitables.
+              Fini les faux avis par étoiles. Les applications, commerces et entreprises togolaises reçoivent des retours textuels authentiques, modérés par IA et directement exploitables pour améliorer leurs services.
             </p>
 
-            {/* Pill CTAs matching reference */}
-            <div className="pt-2 flex flex-wrap items-center gap-3">
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-wrap items-center gap-4">
               <Link
                 href="/register-company"
-                className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all duration-200"
+                className="group inline-flex items-center gap-3 pl-6 pr-2.5 py-3 text-sm font-extrabold text-white bg-slate-950 hover:bg-emerald-950 rounded-full shadow-lg shadow-emerald-950/20 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <span>Inscrire mon entreprise</span>
-                <ArrowRight className="w-4 h-4" />
+                <span className="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-400 transition-all">
+                  <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+                </span>
               </Link>
+
               <Link
                 href="/app"
-                className="inline-flex items-center gap-2 px-6 py-3.5 text-sm font-semibold text-slate-700 bg-white/80 hover:bg-white border border-slate-200/80 rounded-full shadow-sm hover:shadow transition-all duration-200"
+                className="group inline-flex items-center gap-2.5 px-6 py-3 text-sm font-bold text-slate-800 bg-white hover:bg-emerald-50/50 border border-slate-200/90 rounded-full shadow-xs hover:border-emerald-300 transition-all duration-200"
               >
-                <Search className="w-4 h-4 text-slate-400" />
+                <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <Search className="w-3.5 h-3.5" />
+                </div>
                 <span>Explorer les services</span>
               </Link>
             </div>
 
-            {/* Bottom Dark HUD Card matching the bottom-left widget in reference */}
-            <div className="pt-4 max-w-md">
-              <div className="glass-panel-dark rounded-3xl p-5 text-white relative overflow-hidden shadow-2xl">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
-                      <Building2 className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-200">Gozem Togo • Lomé</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full">
-                    Abonnés actifs
-                  </span>
-                </div>
-
-                <div className="pt-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-xl font-black tracking-tight text-white">
-                      1 420 abonnés
-                    </div>
-                    <div className="text-[11px] text-slate-400">92 retours traités ce mois</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-bold text-indigo-400">100% Qualitatif</div>
-                    <div className="text-[10px] text-slate-400">0 faux avis étoiles</div>
-                  </div>
-                </div>
+            {/* Micro proof tags */}
+            <div className="pt-3 flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500">
+              <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/60">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>100% Modéré par IA</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-700">
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                <span>Paiements T-Money & Flooz intégrés</span>
               </div>
             </div>
           </motion.div>
 
-          {/* RIGHT COLUMN: Free-floating 3D visual composition */}
-          <div className="lg:col-span-6 relative flex items-center justify-center min-h-[460px] lg:min-h-[540px]">
+          {/* RIGHT COLUMN: Honest Product Demonstration Card */}
+          <div className="lg:col-span-5 relative flex items-center justify-center min-h-[440px] sm:min-h-[500px]">
             
-            {/* Free-floating top-right Purple Glass Plus Button */}
+            {/* Background glowing disk */}
+            <div className="absolute w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-emerald-300/20 blur-3xl -z-10 animate-pulse-subtle" />
+
+            {/* Product Mockup & Demo Showcase Card */}
             <motion.div
-              animate={{ y: [-6, 6, -6], rotate: [0, 4, 0] }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              className="relative z-10 w-full max-w-sm rounded-3xl bg-white border border-emerald-100 p-6 shadow-xl shadow-emerald-500/10"
+            >
+              {/* Top status bar */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                    Aperçu de l&apos;interface
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  Démonstration
+                </span>
+              </div>
+
+              {/* Center Megaphone graphic illustration */}
+              <div className="py-6 flex flex-col items-center justify-center text-center relative">
+                <div className="relative w-32 h-32 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-lime-300 p-1 shadow-lg shadow-emerald-500/30 flex items-center justify-center">
+                  <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden relative">
+                    <div className="text-center space-y-1">
+                      <Radio className="w-9 h-9 text-emerald-400 mx-auto" />
+                      <span className="text-[10px] font-extrabold text-emerald-300 block">
+                        VOIX DU CLIENT
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 text-center">
+                  <span className="text-xs font-extrabold text-slate-900 block">
+                    Modération qualitative par IA
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Chaque retour est analysé pour garantir le respect et la clarté
+                  </span>
+                </div>
+              </div>
+
+              {/* Sample moderated feedback demonstration snippet */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/70 text-xs text-emerald-950 space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] font-bold text-emerald-800">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    Exemple de retour validé
+                  </span>
+                  <span className="bg-emerald-200/70 text-emerald-950 px-1.5 py-0.5 rounded font-black">
+                    Qualité 95%
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-900 font-medium leading-relaxed">
+                  &quot;Le délai de livraison à Tokoin est rapide, mais l&apos;option de reçu par SMS serait un vrai plus pour mon suivi.&quot;
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Floating Orbit Node 1: Qualitative Promise (Top Right) */}
+            <motion.div
+              animate={{ y: [-6, 6, -6], rotate: [0, 3, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-0 right-8 z-30 w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 text-white flex items-center justify-center text-xl font-light shadow-xl shadow-purple-500/30 cursor-pointer hover:scale-110 transition-transform"
+              className="absolute -top-4 -right-2 sm:right-2 z-20 bg-white/95 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-emerald-200 shadow-lg flex items-center gap-2.5"
             >
-              +
+              <div className="w-7 h-7 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-extrabold text-slate-900">100% Qualitatif</div>
+                <div className="text-[9px] text-slate-500 font-semibold">Sans étoiles</div>
+              </div>
             </motion.div>
 
-            {/* Free-floating Glass Tile 1 (Top Left) */}
+            {/* Floating Orbit Node 2: Zero Spam (Bottom Left) */}
             <motion.div
-              animate={{ y: [-8, 8, -8], rotate: [-2, 2, -2] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-6 left-8 z-20 glass-cube-3d w-28 h-28 rounded-3xl p-3 flex flex-col items-center justify-center gap-2"
+              animate={{ y: [6, -6, 6], rotate: [-2, 2, -2] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+              className="absolute -bottom-4 -left-2 sm:left-0 z-20 bg-white/95 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-emerald-200 shadow-lg flex items-center gap-2.5"
             >
-              <div className="w-10 h-10 rounded-2xl bg-emerald-400/80 flex items-center justify-center shadow-inner">
-                <Check className="w-5 h-5 text-emerald-950 font-bold" />
+              <div className="w-7 h-7 rounded-xl bg-slate-950 text-emerald-400 flex items-center justify-center">
+                <MessageSquareQuote className="w-4 h-4" />
               </div>
-              <span className="text-[10px] font-bold text-slate-800">Modéré</span>
+              <div>
+                <div className="text-xs font-extrabold text-slate-900">Zéro Insulte</div>
+                <div className="text-[9px] text-slate-500 font-semibold">Filtrage bienveillant</div>
+              </div>
             </motion.div>
 
-            {/* Free-floating Glass Tile 2 (Top Right) */}
+            {/* Floating Orbit Node 3: AI Shield (Right Center) */}
             <motion.div
-              animate={{ y: [8, -8, 8], rotate: [2, -2, 2] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute top-8 right-24 z-20 glass-cube-3d w-28 h-28 rounded-3xl p-3 flex flex-col items-center justify-center gap-2"
+              animate={{ y: [-5, 5, -5] }}
+              transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute top-1/2 -right-4 sm:-right-6 -translate-y-1/2 z-20 bg-slate-950 text-white rounded-2xl px-3.5 py-2 border border-emerald-500/40 shadow-xl flex items-center gap-2"
             >
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/80 flex items-center justify-center text-white shadow-inner">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold text-slate-800">Feedback</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span className="text-[11px] font-bold text-emerald-200">Arbitre IA Intégré</span>
             </motion.div>
-
-            {/* Free-floating Glass Tile 3 (Middle Right) */}
-            <motion.div
-              animate={{ y: [-7, 7, -7], rotate: [1, -3, 1] }}
-              transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute top-44 -right-2 z-20 glass-cube-3d w-28 h-28 rounded-3xl p-3 flex flex-col items-center justify-center gap-2"
-            >
-              <div className="w-10 h-10 rounded-2xl bg-amber-400/80 flex items-center justify-center shadow-inner">
-                <BellRing className="w-5 h-5 text-amber-950" />
-              </div>
-              <span className="text-[10px] font-bold text-slate-800">Annonce</span>
-            </motion.div>
-
-            {/* Free-floating Dark Widget Tile (Middle Left) */}
-            <motion.div
-              animate={{ y: [6, -6, 6] }}
-              transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-              className="absolute top-44 left-0 z-20 rounded-3xl bg-slate-900/90 backdrop-blur-xl border border-white/20 p-4 w-32 shadow-2xl"
-            >
-              <div className="flex items-center gap-1.5 mb-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <div className="w-2.5 h-2.5 rounded-full bg-purple-400" />
-              </div>
-              <div className="text-[11px] font-bold text-white">Direct Togo</div>
-              <div className="text-[9px] text-slate-400">Sans étoile</div>
-            </motion.div>
-
-            {/* Central 3D Visual: Crystal Dish with Glowing Glass Cylinders / Tubes matching reference */}
-            <div className="relative z-10 w-80 sm:w-96 h-80 sm:h-96 flex items-center justify-center">
-              {/* The Glass Dish Base */}
-              <div className="absolute bottom-6 w-72 sm:w-80 h-32 rounded-[50%] border-4 border-white/70 bg-gradient-to-b from-white/40 via-purple-300/20 to-indigo-500/20 backdrop-blur-md shadow-2xl -rotate-6 pointer-events-none" />
-
-              {/* 3D Glass Cylinders / Data Vials */}
-              <div className="relative flex items-end justify-center gap-3 sm:gap-4 -mt-8">
-                {/* Cylinder 1: Purple Gradient */}
-                <motion.div
-                  animate={{ y: [-4, 4, -4] }}
-                  transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-14 sm:w-16 h-48 sm:h-56 rounded-full glass-cylinder relative overflow-hidden"
-                >
-                  <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-purple-700 via-indigo-600 to-transparent opacity-80" />
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-4 rounded-full bg-white/60" />
-                </motion.div>
-
-                {/* Cylinder 2: Cyan/Blue Gradient */}
-                <motion.div
-                  animate={{ y: [4, -4, 4] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-                  className="w-14 sm:w-16 h-40 sm:h-48 rounded-full border border-white/80 bg-gradient-to-b from-white/70 via-cyan-400/30 to-indigo-600/70 backdrop-blur-md relative overflow-hidden shadow-xl shadow-cyan-500/20"
-                >
-                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-indigo-700 via-cyan-600 to-transparent opacity-75" />
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-4 rounded-full bg-white/60" />
-                </motion.div>
-
-                {/* Cylinder 3: Tall Crystal White/Violet */}
-                <motion.div
-                  animate={{ y: [-6, 6, -6] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
-                  className="w-14 sm:w-16 h-56 sm:h-64 rounded-full border border-white/90 bg-gradient-to-b from-white/90 via-purple-200/40 to-indigo-500/60 backdrop-blur-md relative overflow-hidden shadow-2xl"
-                >
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-purple-800 via-indigo-500 to-transparent opacity-70" />
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-4 rounded-full bg-white/80" />
-                </motion.div>
-              </div>
-
-              {/* Free-floating Chrome & Glass Liquid Droplets */}
-              <motion.div
-                animate={{ y: [-8, 8, -8], x: [-3, 3, -3] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-2 -right-4 z-30 w-12 h-12 rounded-full glass-bubble"
-              />
-              <motion.div
-                animate={{ y: [6, -6, 6], x: [3, -3, 3] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -top-4 left-16 z-30 w-8 h-8 rounded-full glass-bubble"
-              />
-            </div>
 
           </div>
 

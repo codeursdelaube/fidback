@@ -8,6 +8,8 @@ import {
   Calendar,
   CheckCircle2,
   Users,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { UpdateAnnouncementItem } from "@/lib/types";
 
@@ -25,7 +27,7 @@ export default function DashboardUpdatesPage() {
       title: "Optimisation de la passerelle de paiement T-Money",
       message:
         "Suite à vos précieux feedbacks concernant le délai de réception de l'OTP le matin, notre équipe technique a migré vers un serveur direct. Les transactions se valident désormais sous 5 secondes chrono !",
-      sentAt: "2026-02-26 10:00",
+      sentAt: "26 Fév 2026 • 10:00",
     },
     {
       id: "upd-2",
@@ -34,7 +36,7 @@ export default function DashboardUpdatesPage() {
       title: "Ajout de 8 nouveaux restaurants partenaires à Lomé",
       message:
         "Vous nous aviez demandé plus de choix culinaires togolais et ouest-africains. Nous venons d'intégrer 8 nouvelles enseignes traditionnelles !",
-      sentAt: "2026-02-20 16:30",
+      sentAt: "20 Fév 2026 • 16:30",
     },
   ]);
 
@@ -53,7 +55,7 @@ export default function DashboardUpdatesPage() {
           : "Gozem Wallet Beta",
       title: title.trim(),
       message: message.trim(),
-      sentAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+      sentAt: "À l'instant",
     };
 
     setAnnouncements([newAnnouncement, ...announcements]);
@@ -67,23 +69,27 @@ export default function DashboardUpdatesPage() {
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold uppercase tracking-wider mb-2">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Communication Abonnés</span>
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
           Annonces & Mises à Jour Produit
         </h2>
-        <p className="text-sm text-slate-600">
-          Bouclez la boucle du feedback : tenez vos abonnés informés des améliorations, corrections et nouveautés.
+        <p className="text-xs sm:text-sm text-slate-600">
+          Bouclez la boucle du feedback : informez vos abonnés des résolutions et améliorations apportées suite à leurs retours.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Form publish announcement */}
-        <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-6">
+        <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-xs space-y-6">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
               <BellRing className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-base font-extrabold text-slate-950">
                 Publier une annonce
               </h3>
               <p className="text-xs text-slate-500">
@@ -93,7 +99,7 @@ export default function DashboardUpdatesPage() {
           </div>
 
           {sentSuccess && (
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>Annonce diffusée avec succès à vos abonnés !</span>
             </div>
@@ -107,7 +113,7 @@ export default function DashboardUpdatesPage() {
               <select
                 value={selectedServiceId}
                 onChange={(e) => setSelectedServiceId(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               >
                 <option value="srv-1">Course Moto & Taxi Lomé (890 abonnés)</option>
                 <option value="srv-2">Livraison Gozem Food (530 abonnés)</option>
@@ -125,7 +131,7 @@ export default function DashboardUpdatesPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex: Version 2.4 : Paiement T-Money accéléré !"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               />
             </div>
 
@@ -138,45 +144,45 @@ export default function DashboardUpdatesPage() {
                 required
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Expliquez à vos abonnés ce qui a changé grâce à leurs feedbacks..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                placeholder="Expliquez à vos abonnés ce qui a changé grâce à leurs retours qualitatifs..."
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/25 transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full font-bold text-sm text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-sm transition-all"
             >
               <Send className="w-4 h-4" />
-              <span>Envoyer l&apos;annonce aux abonnés</span>
+              <span>Diffuser la mise à jour aux abonnés</span>
             </button>
           </form>
         </div>
 
         {/* History of published announcements */}
         <div className="lg:col-span-6 space-y-4">
-          <h3 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-200/80">
-            Historique des annonces envoyées ({announcements.length})
+          <h3 className="text-base font-extrabold text-slate-950 pb-2 border-b border-slate-200/80">
+            Historique des annonces diffusées ({announcements.length})
           </h3>
 
           <div className="space-y-4">
             {announcements.map((ann) => (
               <div
                 key={ann.id}
-                className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-3"
+                className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-3 hover:border-emerald-300 transition-all"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                     {ann.serviceName}
                   </span>
                   <span className="text-[10px] text-slate-400">{ann.sentAt}</span>
                 </div>
 
-                <h4 className="text-base font-bold text-slate-900">
+                <h4 className="text-base font-bold text-slate-950">
                   {ann.title}
                 </h4>
 
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100">
                   {ann.message}
                 </p>
               </div>

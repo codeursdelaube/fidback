@@ -1,72 +1,93 @@
 "use client";
 
 import { motion } from "motion/react";
+import {
+  MessageSquareText,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Zap,
+  CheckCircle2,
+} from "lucide-react";
 
 export function Stats() {
-  const statCapsules = [
+  const productPromises = [
     {
-      label: "Retours Qualitatifs",
-      value: "45 280+",
-      badge: "Textes",
-      badgeColor: "bg-indigo-600 text-white",
+      label: "0 Étoile Trompeuse",
+      value: "100% Qualitatif",
+      sub: "Avis textuels argumentés",
+      icon: MessageSquareText,
     },
     {
-      label: "Entreprises Togo",
-      value: "140+",
-      badge: "Lomé & Régions",
-      badgeColor: "bg-purple-600 text-white",
+      label: "Arbitre IA Intégré",
+      value: "100% Modéré",
+      sub: "Zéro insulte ni dénigrement",
+      icon: ShieldCheck,
     },
     {
-      label: "Abonnés Actifs",
-      value: "28 350+",
-      badge: "Engagés",
-      badgeColor: "bg-indigo-500 text-white",
+      label: "Boucle d'Écoute",
+      value: "Mises à Jour",
+      sub: "Abonnés notifiés en direct",
+      icon: Zap,
     },
     {
-      label: "Faux Avis Étoiles",
-      value: "0.00",
-      badge: "100% Qualité",
-      badgeColor: "bg-purple-700 text-white",
+      label: "Paiements Locaux",
+      value: "T-Money & Flooz",
+      sub: "Règlements mobiles au Togo",
+      icon: Smartphone,
     },
   ];
 
   return (
-    <section className="py-8 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        {/* Floating Stat Capsules Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative">
-          {statCapsules.map((item, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              className="glass-panel rounded-3xl px-5 py-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all group"
-            >
-              <div>
-                <span className="text-[11px] font-medium text-slate-500 block mb-0.5">
-                  {item.label}
-                </span>
-                <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  {item.value}
-                </span>
-              </div>
-              <span
-                className={`text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${item.badgeColor}`}
-              >
-                {item.badge}
-              </span>
-            </motion.div>
-          ))}
-
-          {/* Floating Chrome Bubble on the right */}
-          <motion.div
-            animate={{ y: [-5, 5, -5] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="hidden lg:block absolute -right-6 -top-6 w-10 h-10 rounded-full glass-bubble pointer-events-none"
-          />
+    <section className="py-12 relative border-y border-slate-200/70 bg-white/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        
+        {/* Pilot Vision Hook (Replacing fake partner logos) */}
+        <div className="text-center max-w-3xl mx-auto space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/90 text-emerald-900 text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Programme Pilote Entreprises du Togo</span>
+          </div>
+          <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+            Conçu pour les entrepreneurs et entreprises togolaises qui veulent grandir grâce aux retours de leurs clients
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500">
+            Une plateforme éthique, sans étoiles anonymes ni règlements complexes. Règlements acceptés via T-Money & Flooz.
+          </p>
         </div>
+
+        {/* 4 Verifiable Product Value Capsules */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {productPromises.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                className="mint-card rounded-3xl p-5 border border-emerald-100/90 shadow-xs flex items-center gap-4 hover:border-emerald-300 transition-all"
+              >
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-base sm:text-lg font-black text-slate-950 tracking-tight block">
+                    {item.value}
+                  </span>
+                  <span className="text-xs font-bold text-emerald-900 block">
+                    {item.label}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {item.sub}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
       </div>
     </section>
   );

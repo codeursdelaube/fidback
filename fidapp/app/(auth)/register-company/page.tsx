@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import OtpVerify from "@/components/auth/OtpVerify";
@@ -149,23 +150,34 @@ function RegisterCompanyForm() {
   };
 
   if (success) {
-    // Redirect for OTP is: /checkout?plan=... after verification
     const nextUrl = `/checkout?plan=${selectedPlan}&companyName=${encodeURIComponent(sanitize(companyName))}&email=${encodeURIComponent(sanitize(email).toLowerCase())}`;
     return (
-      <OtpVerify
-        email={sanitize(email).toLowerCase()}
-        redirectTo={nextUrl}
-        otpType="signup"
-        onBack={() => setSuccess(false)}
-      />
+      <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#F8FAF9] relative overflow-hidden font-sans">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+          <div className="text-center mb-6">
+            <Link href="/" className="inline-flex items-center gap-2.5 group">
+              <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-emerald-500/40 bg-emerald-950 flex items-center justify-center shadow-xs">
+                <Image src="/logo.png" alt="Fidback Logo" fill className="object-cover" priority />
+              </div>
+              <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
+            </Link>
+          </div>
+          <OtpVerify
+            email={sanitize(email).toLowerCase()}
+            redirectTo={nextUrl}
+            otpType="signup"
+            onBack={() => setSuccess(false)}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="glass-card rounded-3xl p-8 shadow-xl">
+    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">
       {error && (
-        <div className="mb-5 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-700 text-xs sm:text-sm">
-          <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-xs sm:text-sm">
+          <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
@@ -187,7 +199,7 @@ function RegisterCompanyForm() {
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Ex: Gozem Togo, Restaurant Le Régal, PayTogo..."
               maxLength={120}
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
             />
           </div>
         </div>
@@ -195,7 +207,7 @@ function RegisterCompanyForm() {
         {/* Email */}
         <div>
           <label htmlFor="comp-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-            Email professionnel
+            Email professionnel de l&apos;entreprise
           </label>
           <div className="relative">
             <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -207,7 +219,7 @@ function RegisterCompanyForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="contact@monentreprise.tg"
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
             />
           </div>
         </div>
@@ -227,7 +239,7 @@ function RegisterCompanyForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 text-sm transition-all"
+              className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
             />
             <button
               type="button"
@@ -254,12 +266,12 @@ function RegisterCompanyForm() {
         </div>
 
         {/* Info box */}
-        <div className="p-3.5 rounded-2xl bg-indigo-50 border border-indigo-100 text-xs text-indigo-900 space-y-1.5">
-          <div className="font-bold flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-indigo-600" />
-            <span>Accès au programme Fidback Togo</span>
+        <div className="p-4 rounded-2xl mint-card border border-emerald-200 text-xs text-emerald-950 space-y-1.5">
+          <div className="font-extrabold flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Rejoignez le Programme Pilote Fidback Togo</span>
           </div>
-          <p className="text-indigo-800/80 text-[11px]">
+          <p className="text-emerald-900/90 text-[11px]">
             Après cette étape, vous choisirez votre formule d&apos;abonnement pour activer votre tableau de bord et publier vos fiches services.
           </p>
         </div>
@@ -267,23 +279,19 @@ function RegisterCompanyForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 transition-all duration-200"
+          className="w-full mt-3 inline-flex items-center justify-center gap-2 pl-6 pr-3 py-3.5 rounded-full font-bold text-sm text-slate-950 bg-lime-400 hover:bg-lime-300 shadow-sm disabled:opacity-50 transition-all duration-200"
         >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <span>Continuer vers le choix de formule</span>
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
+          <span>{loading ? "Création en cours..." : "Continuer vers le choix de formule"}</span>
+          <span className="w-7 h-7 rounded-full bg-slate-950 text-white flex items-center justify-center">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+          </span>
         </button>
       </form>
 
       <div className="mt-7 pt-5 border-t border-slate-100 text-center text-xs text-slate-600">
         <p>
           Votre entreprise possède déjà un compte ?{" "}
-          <Link href="/login?role=company" className="font-bold text-indigo-600 hover:text-indigo-700 underline">
+          <Link href="/login?role=company" className="font-bold text-emerald-800 hover:text-emerald-950 underline">
             Se connecter
           </Link>
         </p>
@@ -295,42 +303,40 @@ function RegisterCompanyForm() {
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
 export default function RegisterCompanyPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[#F8FAF9] relative overflow-hidden font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Back button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 mb-6 transition-colors group"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-950 mb-6 transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft className="w-4 h-4 text-emerald-600 group-hover:-translate-x-0.5 transition-transform" />
           <span>Retour à l&apos;accueil</span>
         </Link>
 
         {/* Logo */}
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2.5 group mb-4">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+            <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-emerald-500/40 bg-emerald-950 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
               <Image src="/logo.png" alt="Fidback Logo" fill className="object-cover" priority />
             </div>
-            <span className="font-extrabold text-2xl tracking-tight text-slate-900">Fidback</span>
+            <span className="font-black text-2xl tracking-tight text-slate-950">Fidback</span>
           </Link>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold border border-purple-200/60 mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-extrabold border border-emerald-300 mb-3">
             <span>Programme Entreprises du Togo 🇹🇬</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
             Inscrivez votre entreprise
           </h1>
-          <p className="mt-2 text-sm text-slate-500">Étape 1 sur 2 : Informations de l&apos;entreprise</p>
+          <p className="mt-2 text-xs sm:text-sm text-slate-600">Étape 1 sur 2 : Informations de l&apos;entreprise</p>
         </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <Suspense
           fallback={
-            <div className="glass-card rounded-3xl p-8 text-center text-sm text-slate-500">
-              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-500" />
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 text-center text-sm text-slate-500">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-emerald-600" />
               Chargement...
             </div>
           }
@@ -339,7 +345,7 @@ export default function RegisterCompanyPage() {
         </Suspense>
 
         <p className="mt-4 text-center text-[11px] text-slate-400 flex items-center justify-center gap-1">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>Inscription sécurisée · Données protégées et confidentielles</span>
         </p>
       </div>
