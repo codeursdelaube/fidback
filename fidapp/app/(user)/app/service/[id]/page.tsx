@@ -89,11 +89,11 @@ export default function ServiceDetailPage() {
     loadUser();
   }, [supabase]);
 
-  // ── Load service from localStorage (all companies) ──
+  // ── Load service from localStorage or /api/services ──
   useEffect(() => {
-    function findService() {
+    async function findService() {
       try {
-        // Scan all company service keys
+        // 1. Scan all company service keys in localStorage
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
           if (key && key.startsWith("fidback_services_")) {
@@ -117,7 +117,6 @@ export default function ServiceDetailPage() {
                   setAnnouncements(allUpdates.filter((u) => u.serviceId === serviceId));
                 }
 
-                // Check if current user is subscribed
                 const subKey = `fidback_sub_${serviceId}`;
                 setIsSubscribed(localStorage.getItem(subKey) === "true");
                 setLoadingService(false);
@@ -126,12 +125,26 @@ export default function ServiceDetailPage() {
             }
           }
         }
+
+        // 2. Fetch from /api/services backend
+        const res = await fetch("/api/services");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.services)) {
+            const found = data.services.find((s: any) => s.id === serviceId);
+            if (found) {
+              setService(found);
+              const subKey = `fidback_sub_${serviceId}`;
+              setIsSubscribed(localStorage.getItem(subKey) === "true");
+              setLoadingService(false);
+              return;
+            }
+          }
+        }
       } catch (e) {
         console.warn("Service load error:", e);
       }
 
-      // ── No service found in localStorage → show not found ──
-      // No demo/mock data injected here.
       setLoadingService(false);
     }
 
@@ -217,6 +230,24 @@ export default function ServiceDetailPage() {
 
       const updated = [newFb, ...feedbacks];
       saveFeedbacks(updated);
+
+      // Save to server backend
+      try {
+        await fetch("/api/feedbacks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            serviceId,
+            companyId: service?.companyId,
+            userPseudo: currentPseudo,
+            content: feedbackContent.trim(),
+            moderationStatus: "APPROVED",
+            constructiveScore: result.constructiveScore || 88,
+            tags: result.tags || [],
+          }),
+        });
+      } catch (_) {}
+
       setFeedbackContent("");
       setSubmittedSuccess(true);
       toast.success(`Feedback certifié IA (Score ${result.constructiveScore || 88}%) transmis à l'équipe !`, {

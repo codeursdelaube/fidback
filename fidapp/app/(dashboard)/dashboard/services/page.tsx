@@ -57,14 +57,41 @@ export default function DashboardServicesPage() {
 
         const storageKey = `fidback_services_${cid}`;
         const saved = localStorage.getItem(storageKey);
+        let localList: ServiceItem[] = [];
+
         if (saved) {
           try {
-            setServices(JSON.parse(saved));
+            localList = JSON.parse(saved);
           } catch (e) {
-            setServices([]);
+            localList = [];
           }
+        }
+
+        // Try to fetch from server API
+        try {
+          const res = await fetch(`/api/services?companyId=${cid}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.services) && data.services.length > 0) {
+              setServices(data.services);
+              localStorage.setItem(storageKey, JSON.stringify(data.services));
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (_) {}
+
+        // If server had nothing but local had services, push local to server
+        if (localList.length > 0) {
+          setServices(localList);
+          localList.forEach((s) => {
+            fetch("/api/services", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...s, companyName: cname }),
+            }).catch(() => {});
+          });
         } else {
-          // Empty initial list for new companies
           setServices([]);
         }
       } catch (err) {
@@ -83,6 +110,7 @@ export default function DashboardServicesPage() {
     if (companyId) {
       localStorage.setItem(`fidback_services_${companyId}`, JSON.stringify(newServices));
       window.dispatchEvent(new Event("fidback_services_updated"));
+      window.dispatchEvent(new Event("storage"));
     }
   };
 
@@ -137,9 +165,10 @@ export default function DashboardServicesPage() {
       setUploading(false);
     }
 
-    const newService: ServiceItem = {
+    const newService: ServiceItem & { companyName?: string } = {
       id: `srv-${Date.now()}`,
       companyId: companyId,
+      companyName: companyName,
       name: newName.trim(),
       description: newDescription.trim(),
       visibility: newVisibility,
@@ -152,6 +181,17 @@ export default function DashboardServicesPage() {
         updateAnnouncements: 0,
       },
     };
+
+    // Sync to backend API so all clients/devices see it
+    try {
+      await fetch("/api/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newService),
+      });
+    } catch (apiErr) {
+      console.warn("API sync error:", apiErr);
+    }
 
     const updated = [newService, ...services];
     saveServices(updated);
@@ -166,7 +206,7 @@ export default function DashboardServicesPage() {
     });
   };
 
-  const toggleVisibility = (id: string) => {
+  const toggleVisibility = async (id: string) => {
     const updated = services.map((s) => {
       if (s.id === id) {
         const nextVis = s.visibility === "PUBLIC" ? ("PRIVATE" as const) : ("PUBLIC" as const);
@@ -174,17 +214,27 @@ export default function DashboardServicesPage() {
           `Visibilité changée en ${nextVis === "PUBLIC" ? "Publique" : "Privée"} pour ${s.name}`,
           { icon: nextVis === "PUBLIC" ? "🌐" : "🔒" }
         );
-        return { ...s, visibility: nextVis };
+        const modified = { ...s, visibility: nextVis, companyName };
+        // Sync visibility to API
+        fetch("/api/services", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(modified),
+        }).catch(() => {});
+        return modified;
       }
       return s;
     });
     saveServices(updated);
   };
 
-  const handleDeleteService = (id: string, name: string) => {
+  const handleDeleteService = async (id: string, name: string) => {
     if (confirm(`Confirmez-vous la suppression de la fiche service « ${name} » ?`)) {
       const updated = services.filter((s) => s.id !== id);
       saveServices(updated);
+      try {
+        await fetch(`/api/services?id=${id}`, { method: "DELETE" });
+      } catch (_) {}
       toast.success(`Fiche « ${name} » supprimée.`, { icon: "🗑️" });
     }
   };

@@ -44,11 +44,12 @@ export default function UserHomePage() {
   const supabase = createClient();
   const [pseudo, setPseudo] = useState("membre");
 
-  // Dynamic data from localStorage
+  // Dynamic data from real DB + localStorage
   const [subscribedServices, setSubscribedServices] = useState<SubscribedService[]>([]);
   const [recentUpdates, setRecentUpdates] = useState<RecentUpdate[]>([]);
   const [myFeedbacks, setMyFeedbacks] = useState<MyFeedback[]>([]);
   const [currentPseudo, setCurrentPseudo] = useState("membre");
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUser() {
@@ -57,6 +58,7 @@ export default function UserHomePage() {
           data: { user },
         } = await supabase.auth.getUser();
         if (user) {
+          setUserId(user.id);
           const uPseudo =
             user.user_metadata?.pseudo ||
             user.user_metadata?.name ||
@@ -66,7 +68,7 @@ export default function UserHomePage() {
           setCurrentPseudo(uPseudo);
         }
       } catch (err) {
-        console.warn("Erreur fetch user:", err);
+        console.error("Erreur fetch user:", err);
       }
     }
     fetchUser();
@@ -74,22 +76,44 @@ export default function UserHomePage() {
 
   useEffect(() => {
     loadFromStorage();
+
+    // Supabase Realtime channel for live announcements
+    const channel = supabase
+      .channel("user-announcements-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "UpdateAnnouncement",
+        },
+        async (payload) => {
+          console.log("Realtime UpdateAnnouncement received:", payload.new);
+          await loadFromStorage();
+        }
+      )
+      .subscribe();
+
     const onUpdate = () => loadFromStorage();
     window.addEventListener("fidback_feedbacks_updated", onUpdate);
+    window.addEventListener("fidback_services_updated", onUpdate);
     window.addEventListener("storage", onUpdate);
     return () => {
+      supabase.removeChannel(channel);
       window.removeEventListener("fidback_feedbacks_updated", onUpdate);
+      window.removeEventListener("fidback_services_updated", onUpdate);
       window.removeEventListener("storage", onUpdate);
     };
-  }, []);
+  }, [supabase]);
 
-  function loadFromStorage() {
+  async function loadFromStorage() {
     try {
       // ── Collect all services + subscriptions ──
-      const subbed: SubscribedService[] = [];
+      const subbedMap = new Map<string, SubscribedService>();
       const updates: RecentUpdate[] = [];
       const myFbs: MyFeedback[] = [];
 
+      // 1. Check localStorage
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (!key) continue;
@@ -103,7 +127,7 @@ export default function UserHomePage() {
           services.forEach((svc) => {
             const isSubbed = localStorage.getItem(`fidback_sub_${svc.id}`) === "true";
             if (isSubbed) {
-              subbed.push({
+              subbedMap.set(svc.id, {
                 id: svc.id,
                 name: svc.name,
                 companyName: svc.companyName,
@@ -146,13 +170,59 @@ export default function UserHomePage() {
         }
       }
 
-      setSubscribedServices(subbed);
-      setRecentUpdates(updates.sort((a, b) => (b.sentAt > a.sentAt ? 1 : -1)).slice(0, 5));
+      // 2. Also check /api/services for subscriptions
+      try {
+        const res = await fetch("/api/services");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.services)) {
+            data.services.forEach((svc: any) => {
+              const isSubbed = localStorage.getItem(`fidback_sub_${svc.id}`) === "true";
+              if (isSubbed && !subbedMap.has(svc.id)) {
+                subbedMap.set(svc.id, {
+                  id: svc.id,
+                  name: svc.name,
+                  companyName: svc.companyName,
+                  category: svc.category,
+                });
+              }
+            });
+          }
+        }
+      } catch (_) {}
+
+      // 3. Fetch server updates — filtered by userId on the server if we have it,
+      //    falling back to localStorage subscription checks
+      try {
+        const currentUser = (await supabase.auth.getUser()).data.user;
+        const uid = currentUser?.id;
+        const updUrl = uid ? `/api/updates?userId=${uid}` : "/api/updates";
+        const resUpd = await fetch(updUrl);
+        if (resUpd.ok) {
+          const dataUpd = await resUpd.json();
+          if (Array.isArray(dataUpd.updates)) {
+            dataUpd.updates.forEach((u: any) => {
+              if (!updates.some((existing) => existing.id === u.id)) {
+                updates.push(u);
+              }
+            });
+          }
+        } else {
+          const errData = await resUpd.json().catch(() => ({}));
+          console.error("Erreur /api/updates:", errData?.error || resUpd.status);
+        }
+      } catch (err) {
+        console.error("Erreur fetch /api/updates:", err);
+      }
+
+      setSubscribedServices(Array.from(subbedMap.values()));
+      setRecentUpdates(updates.slice(0, 10));
       setMyFeedbacks(myFbs.slice(0, 10));
     } catch (e) {
       console.warn("Erreur chargement données home:", e);
     }
   }
+
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">

@@ -1,75 +1,47 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma Schema for Fidback
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
 generator client {
-  provider = "prisma-client"
-}
-
-datasource db {
-  provider = "postgresql"
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  INACTIVE
-  TRIAL
-}
-
-enum ServiceVisibility {
-  PUBLIC
-  PRIVATE
-}
-
-enum ModerationStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
+  provider = "prisma-client-js"
 }
 
 model User {
-  id            String         @id @default(uuid())
+  id            String         @id @default(cuid())
   pseudo        String         @unique
   email         String         @unique
   createdAt     DateTime       @default(now())
   subscriptions Subscription[]
-
-  @@map("users")
 }
 
 model Company {
-  id                 String             @id @default(uuid())
+  id                 String    @id @default(cuid())
   name               String
-  email              String             @unique
-  subscriptionStatus SubscriptionStatus @default(ACTIVE)
-  createdAt          DateTime           @default(now())
+  email              String    @unique
+  logoUrl            String?
+  subscriptionStatus String    @default("ACTIVE")
+  createdAt          DateTime  @default(now())
   services           Service[]
-  payments           Payment[]
-
-  @@map("companies")
 }
 
 model Service {
-  id                  String               @id @default(uuid())
-  companyId           String
-  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name                String
-  description         String
-  visibility          ServiceVisibility    @default(PUBLIC)
-  createdAt           DateTime             @default(now())
-  subscriptions       Subscription[]
-  updateAnnouncements UpdateAnnouncement[]
-
-  @@map("services")
+  id            String               @id @default(cuid())
+  companyId     String
+  company       Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name          String
+  description   String
+  logoUrl       String?
+  visibility    String               @default("PUBLIC")
+  createdAt     DateTime             @default(now())
+  subscriptions Subscription[]
+  announcements UpdateAnnouncement[]
 }
 
 model Subscription {
-  id        String     @id @default(uuid())
+  id        String     @id @default(cuid())
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   serviceId String
@@ -78,39 +50,23 @@ model Subscription {
   feedbacks Feedback[]
 
   @@unique([userId, serviceId])
-  @@map("subscriptions")
 }
 
 model Feedback {
-  id               String           @id @default(uuid())
-  subscriptionId   String
-  subscription     Subscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  content          String
-  moderationStatus ModerationStatus @default(PENDING)
-  createdAt        DateTime         @default(now())
-
-  @@map("feedbacks")
+  id                String       @id @default(cuid())
+  subscriptionId    String
+  subscription      Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  content           String
+  moderationStatus  String       @default("PENDING")
+  constructiveScore Int?
+  createdAt         DateTime     @default(now())
 }
 
 model UpdateAnnouncement {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   serviceId String
   service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   title     String
   message   String
   sentAt    DateTime @default(now())
-
-  @@map("update_announcements")
-}
-
-model Payment {
-  id        String        @id @default(uuid())
-  companyId String
-  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  amount    Float
-  status    PaymentStatus @default(PENDING)
-  provider  String
-  createdAt DateTime      @default(now())
-
-  @@map("payments")
 }

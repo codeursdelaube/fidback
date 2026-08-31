@@ -1,0 +1,18 @@
+[
+  {
+    "id": "srv-1788174738717",
+    "companyId": "47f38256-b5d9-4433-8908-b2888367f79f",
+    "companyName": "Heritogo",
+    "name": "Heritogo app",
+    "description": "Faire le tourisme au Togo est plus facile avec Heritogo",
+    "visibility": "PUBLIC",
+    "category": "Technologie & App",
+    "createdAt": "2026-08-31",
+    "logoUrl": "blob:http://localhost:3000/4954a2ed-0bf0-48e0-9ef3-50a368837f9f",
+    "_count": {
+      "subscriptions": 0,
+      "feedbacks": 0,
+      "updateAnnouncements": 0
+    }
+  }
+]

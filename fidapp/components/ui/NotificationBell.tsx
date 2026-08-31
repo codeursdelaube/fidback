@@ -10,8 +10,10 @@ import {
   markOneRead,
   clearNotifications,
   requestNotificationPermission,
+  pushNotification,
   timeAgo,
 } from "@/lib/notifications";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 interface NotificationBellProps {
@@ -31,21 +33,84 @@ export default function NotificationBell({ variant = "light" }: NotificationBell
     setUnread(getUnreadCount());
   };
 
+  const syncServerUpdates = async () => {
+    try {
+      const res = await fetch("/api/updates");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.updates)) {
+          const stored = getStoredNotifications();
+          const notifiedSet = new Set(
+            stored.map((n) => n.title + "_" + n.body)
+          );
+
+          data.updates.forEach((upd: any) => {
+            const title = `📢 ${upd.serviceName || "Mise à jour"} : ${upd.title}`;
+            const key = title + "_" + upd.message;
+            if (!notifiedSet.has(key)) {
+              pushNotification({
+                type: "update",
+                title,
+                body: upd.message,
+                href: `/app/service/${upd.serviceId}`,
+              });
+            }
+          });
+        }
+      }
+    } catch (_) {}
+  };
+
   useEffect(() => {
+    const supabase = createClient();
     refresh();
+    syncServerUpdates();
+
+    // Supabase Realtime channel for live announcements and feedbacks
+    const channel = supabase
+      .channel("notification-bell-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "UpdateAnnouncement" },
+        (payload: any) => {
+          console.log("Realtime bell notification received:", payload.new);
+          const upd: any = payload.new;
+          pushNotification({
+            type: "update",
+            title: `📢 Mise à jour : ${upd.title}`,
+            body: upd.message,
+            href: `/app/service/${upd.serviceId}`,
+          });
+          refresh();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "Feedback" },
+        () => {
+          refresh();
+        }
+      )
+      .subscribe();
 
     const onNotif = () => refresh();
     const onRead = () => refresh();
 
     window.addEventListener("fidback_notification", onNotif);
     window.addEventListener("fidback_notifications_read", onRead);
+    window.addEventListener("fidback_updates_updated", syncServerUpdates);
 
-    // Poll every 5s for cross-tab updates
-    const interval = setInterval(refresh, 5000);
+    // Poll every 5s for fallback sync
+    const interval = setInterval(() => {
+      refresh();
+      syncServerUpdates();
+    }, 5000);
 
     return () => {
+      supabase.removeChannel(channel);
       window.removeEventListener("fidback_notification", onNotif);
       window.removeEventListener("fidback_notifications_read", onRead);
+      window.removeEventListener("fidback_updates_updated", syncServerUpdates);
       clearInterval(interval);
     };
   }, []);

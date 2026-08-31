@@ -33,11 +33,17 @@ export default function ExploreServicesPage() {
     loadServices();
     const onUpdate = () => loadServices();
     window.addEventListener("storage", onUpdate);
-    return () => window.removeEventListener("storage", onUpdate);
+    window.addEventListener("fidback_services_updated", onUpdate);
+    return () => {
+      window.removeEventListener("storage", onUpdate);
+      window.removeEventListener("fidback_services_updated", onUpdate);
+    };
   }, []);
 
-  function loadServices() {
-    const collected: ServiceWithMeta[] = [];
+  async function loadServices() {
+    const serviceMap = new Map<string, ServiceWithMeta>();
+
+    // 1. Collect from localStorage
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -49,7 +55,7 @@ export default function ExploreServicesPage() {
               parsed.forEach((s) => {
                 if (s.visibility === "PUBLIC") {
                   const isSubbed = localStorage.getItem(`fidback_sub_${s.id}`) === "true";
-                  collected.push({
+                  serviceMap.set(s.id, {
                     ...s,
                     isSubscribed: isSubbed,
                     bannerUrl: s.logoUrl || s.bannerUrl,
@@ -61,9 +67,32 @@ export default function ExploreServicesPage() {
         }
       }
     } catch (e) {
-      console.warn("Explorer load services:", e);
+      console.warn("Explorer load localStorage services:", e);
     }
-    setServices(collected);
+
+    // 2. Fetch from /api/services (backend sync)
+    try {
+      const res = await fetch("/api/services");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.services)) {
+          data.services.forEach((s: any) => {
+            if (s.visibility === "PUBLIC") {
+              const isSubbed = localStorage.getItem(`fidback_sub_${s.id}`) === "true";
+              serviceMap.set(s.id, {
+                ...s,
+                isSubscribed: isSubbed,
+                bannerUrl: s.logoUrl || s.bannerUrl,
+              });
+            }
+          });
+        }
+      }
+    } catch (apiErr) {
+      console.warn("Explorer fetch /api/services error:", apiErr);
+    }
+
+    setServices(Array.from(serviceMap.values()));
   }
 
   const toggleSubscription = (serviceId: string) => {

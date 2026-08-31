@@ -63,14 +63,56 @@ export default function DashboardUpdatesPage() {
         // Load announcements
         const updatesKey = `fidback_updates_${cid}`;
         const savedUpdates = localStorage.getItem(updatesKey);
+        let localAnnouncements: (UpdateAnnouncementItem & { companyName?: string })[] = [];
         if (savedUpdates) {
           try {
-            setAnnouncements(JSON.parse(savedUpdates));
+            localAnnouncements = JSON.parse(savedUpdates);
           } catch (e) {
-            setAnnouncements([]);
+            localAnnouncements = [];
           }
-        } else {
-          setAnnouncements([]);
+        }
+
+        // Try to fetch from server API
+        try {
+          const res = await fetch("/api/updates");
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.updates)) {
+              // Merge local and server
+              const combined = [...localAnnouncements];
+              data.updates.forEach((u: any) => {
+                if (!combined.some((c) => c.id === u.id)) {
+                  combined.push(u);
+                }
+              });
+              setAnnouncements(combined);
+              localStorage.setItem(updatesKey, JSON.stringify(combined));
+
+              // Push any local announcements not yet on server
+              localAnnouncements.forEach((loc) => {
+                if (!data.updates.some((srv: any) => srv.id === loc.id)) {
+                  fetch("/api/updates", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...loc, companyName: cname }),
+                  }).catch(() => {});
+                }
+              });
+              return;
+            }
+          }
+        } catch (_) {}
+
+        // Fallback to local
+        setAnnouncements(localAnnouncements);
+        if (localAnnouncements.length > 0) {
+          localAnnouncements.forEach((loc) => {
+            fetch("/api/updates", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...loc, companyName: cname }),
+            }).catch(() => {});
+          });
         }
       } catch (err) {
         console.warn("Erreur chargement updates:", err);
@@ -90,7 +132,7 @@ export default function DashboardUpdatesPage() {
     }
   };
 
-  const handlePublishUpdate = (e: React.FormEvent) => {
+  const handlePublishUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !message.trim()) {
       toast.error("Veuillez renseigner un titre et un message.");
@@ -100,14 +142,26 @@ export default function DashboardUpdatesPage() {
     const currentService = services.find((s) => s.id === selectedServiceId);
     const serviceName = currentService ? currentService.name : "Service Principal";
 
-    const newAnnouncement: UpdateAnnouncementItem = {
+    const newAnnouncement: UpdateAnnouncementItem & { companyName?: string } = {
       id: `upd-${Date.now()}`,
       serviceId: selectedServiceId || "default-srv",
       serviceName,
+      companyName,
       title: title.trim(),
       message: message.trim(),
       sentAt: "À l'instant",
     };
+
+    // 1. Post to backend API so all clients/devices receive it
+    try {
+      await fetch("/api/updates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAnnouncement),
+      });
+    } catch (apiErr) {
+      console.warn("API publish update error:", apiErr);
+    }
 
     const updated = [newAnnouncement, ...announcements];
     saveAnnouncements(updated);
@@ -118,10 +172,10 @@ export default function DashboardUpdatesPage() {
       icon: "📢",
     });
 
-    // Fire browser push notification for the company user too
+    // Fire browser push notification for the creator
     pushNotification({
       type: "update",
-      title: `📢 MAJ publiée — ${serviceName}`,
+      title: `📢 MAJ diffusée — ${serviceName}`,
       body: title.trim(),
       href: `/dashboard/updates`,
     });

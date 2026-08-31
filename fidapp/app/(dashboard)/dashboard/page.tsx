@@ -44,29 +44,40 @@ export default function DashboardOverviewPage() {
         "Votre Entreprise";
       setCompanyName(cname);
 
-      // Load services
-      const savedServices = localStorage.getItem(`fidback_services_${cid}`);
-      const services: ServiceItem[] = savedServices ? JSON.parse(savedServices) : [];
-      setServicesList(services);
-      setServicesCount(services.length);
+      // 1. Load services & real subscription counts from Prisma API
+      const srvRes = await fetch(`/api/services?companyId=${cid}`);
+      if (srvRes.ok) {
+        const srvData = await srvRes.json();
+        if (Array.isArray(srvData.services)) {
+          setServicesList(srvData.services);
+          setServicesCount(srvData.services.length);
 
-      // Compute total subscribers
-      const totalSubs = services.reduce(
-        (acc, s) => acc + (s._count?.subscriptions || 0),
-        0
-      );
-      setSubscribersCount(totalSubs);
+          const totalSubs = srvData.services.reduce(
+            (acc: number, s: any) => acc + (s._count?.subscriptions || 0),
+            0
+          );
+          setSubscribersCount(totalSubs);
+        }
+      }
 
-      // Load feedbacks
-      const savedFeedbacks = localStorage.getItem(`fidback_feedbacks_${cid}`);
-      const feedbacks: any[] = savedFeedbacks ? JSON.parse(savedFeedbacks) : [];
-      setFeedbacksCount(feedbacks.length);
-      setRecentFeedbacks(feedbacks.slice(0, 3));
+      // 2. Load real feedbacks from Prisma API
+      const fbRes = await fetch(`/api/feedbacks?companyId=${cid}`);
+      if (fbRes.ok) {
+        const fbData = await fbRes.json();
+        if (Array.isArray(fbData.feedbacks)) {
+          setFeedbacksCount(fbData.feedbacks.length);
+          setRecentFeedbacks(fbData.feedbacks.slice(0, 3));
+        }
+      }
 
-      // Load updates
-      const savedUpdates = localStorage.getItem(`fidback_updates_${cid}`);
-      const updates: UpdateAnnouncementItem[] = savedUpdates ? JSON.parse(savedUpdates) : [];
-      setUpdatesCount(updates.length);
+      // 3. Load real update announcements from Prisma API
+      const updRes = await fetch(`/api/updates?companyId=${cid}`);
+      if (updRes.ok) {
+        const updData = await updRes.json();
+        if (Array.isArray(updData.updates)) {
+          setUpdatesCount(updData.updates.length);
+        }
+      }
     } catch (e) {
       console.warn("Erreur chargement aperçu:", e);
     }
@@ -75,17 +86,38 @@ export default function DashboardOverviewPage() {
   useEffect(() => {
     loadCompanyData();
 
+    // Supabase Realtime listeners for live updates on Subscription and Feedback
+    const channel = supabase
+      .channel("dashboard-overview-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "Subscription" },
+        () => loadCompanyData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "Feedback" },
+        () => loadCompanyData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "UpdateAnnouncement" },
+        () => loadCompanyData()
+      )
+      .subscribe();
+
     const handleServicesUpdate = () => loadCompanyData();
     window.addEventListener("fidback_services_updated", handleServicesUpdate);
     window.addEventListener("fidback_profile_updated", handleServicesUpdate);
     window.addEventListener("fidback_updates_updated", handleServicesUpdate);
 
     return () => {
+      supabase.removeChannel(channel);
       window.removeEventListener("fidback_services_updated", handleServicesUpdate);
       window.removeEventListener("fidback_profile_updated", handleServicesUpdate);
       window.removeEventListener("fidback_updates_updated", handleServicesUpdate);
     };
-  }, []);
+  }, [supabase]);
 
   const stats = [
     {

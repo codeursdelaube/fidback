@@ -51,15 +51,36 @@ export default function DashboardFeedbacksPage() {
 
         const storageKey = `fidback_feedbacks_${cid}`;
         const saved = localStorage.getItem(storageKey);
+        let localFeedbacks: FeedbackWithAI[] = [];
         if (saved) {
           try {
-            setFeedbacks(JSON.parse(saved));
+            localFeedbacks = JSON.parse(saved);
           } catch (e) {
-            setFeedbacks([]);
+            localFeedbacks = [];
           }
-        } else {
-          setFeedbacks([]);
         }
+
+        // Fetch from server API
+        try {
+          const res = await fetch(`/api/feedbacks?companyId=${cid}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.feedbacks) && data.feedbacks.length > 0) {
+              const combined = [...localFeedbacks];
+              data.feedbacks.forEach((f: any) => {
+                if (!combined.some((c) => c.id === f.id)) {
+                  combined.push(f);
+                }
+              });
+              setFeedbacks(combined);
+              localStorage.setItem(storageKey, JSON.stringify(combined));
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (_) {}
+
+        setFeedbacks(localFeedbacks);
       } catch (err) {
         console.warn("Erreur chargement feedbacks:", err);
       } finally {
